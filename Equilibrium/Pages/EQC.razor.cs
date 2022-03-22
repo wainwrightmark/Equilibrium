@@ -22,9 +22,7 @@ public partial class EQC
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        
         World = new World(new Vector2(0, 10));
-
 
         var rect = World.CreateRectangle(
             400 * XScale,
@@ -123,9 +121,9 @@ public partial class EQC
             await batch.DrawBodyAsync(body);
         }
 
-        await batch.ResetTransformAsync();
-        await batch.FillStyleAsync("black");
-        await batch.FillTextAsync($"FPS: {(int)_fps}", 10, 50);
+        //await batch.ResetTransformAsync();
+        //await batch.FillStyleAsync("black");
+        //await batch.FillTextAsync($"FPS: {(int)_fps}", 10, 50);
     }
 
     private Stack<Vector2> _bodiesToAdd = new();

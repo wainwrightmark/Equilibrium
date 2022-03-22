@@ -6,123 +6,29 @@ using tainicom.Aether.Physics2D.Dynamics;
 
 namespace Equilibrium.Pages;
 
-public class WorldObject
+//public class WorldObject
+//{
+//    protected WorldObject(Body body)
+//    {
+//        Body = body;
+//    }
+
+//    public async Task Draw(Batch2D batch)
+//    {
+//        await batch.StrokeStyleAsync(StrokeColor);
+//        await batch.FillStyleAsync(FillColor);
+//        await batch.DrawBodyAsync(Body);
+//    }
+
+//    public Body Body { get; }
+
+//    public string StrokeColor { get; set; } = "black";
+//    public string FillColor { get; set; } = "grey";
+//}
+
+
+public static class DrawHelpers
 {
-    protected WorldObject(Body body)
-    {
-        Body = body;
-    }
-
-    public async Task Draw(Batch2D batch)
-    {
-        await batch.StrokeStyleAsync(StrokeColor);
-        await batch.FillStyleAsync(FillColor);
-        await batch.DrawBodyAsync(Body);
-    }
-
-    public Body Body { get; }
-
-    public string StrokeColor { get; set; } = "black";
-    public string FillColor { get; set; } = "grey";
-}
-
-
-public static class WorldObjectHelpers
-{
-    //public static Body CreateRectangle(this World world, BodyType bodyType, Vector2 topLeft, float width, float height)
-    //{
-    //    //var bd = new BodyDef
-    //    //{
-    //    //    type = bodyType,
-    //    //    position = topLeft,
-    //    //    angle = 0,
-    //    //    linearVelocity = new Vector2(0, 0),
-    //    //    angularVelocity = 0,
-    //    //    linearDamping = 0,
-    //    //    angularDamping = 0,
-    //    //    allowSleep = true,
-    //    //    awake = true,
-    //    //    fixedRotation = false,
-    //    //    bullet = false,
-    //    //    // bd.active = true;
-    //    //    gravityScale = 1
-    //    //};
-
-    //    var body =world.CreateBody(topLeft, 0f, bodyType);
-
-    //    world.create
-
-    //    body.CreateFixture(new PolygonShape())
-
-    //    var fd = new FixtureDef
-    //    {
-    //        friction = 0.3f,
-    //        restitution = 0.8f,
-    //        density = 1f,
-    //        isSensor = false,
-    //        filter =
-    //        {
-    //            categoryBits = 1,
-    //            maskBits = 65535,
-    //            groupIndex = 0
-    //        }
-    //    };
-    //    var shape = new PolygonShape(width, height);
-
-    //    fd.shape = shape;
-
-    //    body.CreateFixture(fd);
-    //    return body;
-    //}
-
-
-    //public static Body CreateCircle(this World world, Vector2 position, float radius)
-    //{
-    //    //world.
-
-    //    var bd = new BodyDef
-    //    {
-    //        type = BodyType.Dynamic,
-    //        position = position,
-    //        angle = 0,
-    //        linearVelocity = new Vector2(0, 0),
-    //        angularVelocity = 0,
-    //        linearDamping = 0,
-    //        angularDamping = 0,
-    //        allowSleep = true,
-    //        awake = true,
-    //        fixedRotation = false,
-    //        bullet = true,
-    //        // bd.active = true;
-    //        gravityScale = 1
-    //    };
-    //    var body = world.CreateBody(bd);
-
-    //    var fd = new FixtureDef
-    //    {
-    //        friction = 0.3f,
-    //        restitution = 0.8f,
-    //        density = 1f,
-    //        isSensor = false,
-    //        filter =
-    //        {
-    //            categoryBits = 1,
-    //            maskBits = 65535,
-    //            groupIndex = 0
-    //        }
-    //    };
-    //    var shape = new CircleShape()
-    //    {
-    //        Center = new Vector2(0, 0),
-    //        Radius = radius
-    //    };
-
-    //    fd.shape = shape;
-
-    //    body.CreateFixture(fd);
-    //    return body;
-    //}
-
 
     public static async Task DrawBodyAsync(this Batch2D context, Body body)
     {
