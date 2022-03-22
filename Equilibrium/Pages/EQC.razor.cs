@@ -1,11 +1,10 @@
-﻿using System.Numerics;
-using Box2D.NetStandard.Dynamics.Bodies;
-using Box2D.NetStandard.Dynamics.World;
-using Excubo.Blazor.Canvas;
+﻿using Excubo.Blazor.Canvas;
 using Excubo.Blazor.Canvas.Contexts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using tainicom.Aether.Physics2D.Common;
+using tainicom.Aether.Physics2D.Dynamics;
 using DotNetObjectReference = Microsoft.JSInterop.DotNetObjectReference;
 
 
@@ -17,7 +16,6 @@ public partial class EQC
     private ElementReference container;
 
     private Canvas helper_canvas;
-    private const int _physicsIterations = 8;
     private Context2D _canvasContext;
     
     /// <inheritdoc />
@@ -26,7 +24,17 @@ public partial class EQC
         base.OnInitialized();
         
         World = new World(new Vector2(0, 10));
-        Bodies.Add(World.CreateRectangle(BodyType.Static, new Vector2(0 + XOffset, 300 + YOffset), 400 * XScale, 10 * YScale));
+
+
+        var rect = World.CreateRectangle(
+            400 * XScale,
+            10 * YScale,
+            1,
+            new Vector2(0 + XOffset, 300 + YOffset),
+            0, BodyType.Static
+        );
+
+        Bodies.Add(rect);
     }
 
     public World World { get; private set; }
@@ -103,11 +111,11 @@ public partial class EQC
             _fps = newFps;
         _lastTimestamp = timeStamp;
 
-        World.Step(dt / 1000, _physicsIterations, _physicsIterations);
+        World.Step(dt / 1000);
 
         while (_bodiesToAdd.TryPop(out var position))
         {
-            var newBody = World.CreateCircle(position, 10);
+            var newBody = World.CreateCircle(10, 1, position, BodyType.Dynamic);
             Bodies.Add(newBody);
         }
         foreach (var body in Bodies)

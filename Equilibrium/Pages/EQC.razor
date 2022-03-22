@@ -1,6 +1,6 @@
 ﻿@inject IJSRuntime JsRuntime;
 
-<div id="canvasContainer" @ref="container" style="border: 1px black solid;">
+<div id="canvasContainer" @ref="container" >
     <Canvas @onmousemove="MouseMoveCanvasAsync"
             @onmouseup="MouseUpCanvas" 
             @onmousedown="MouseDownCanvas"

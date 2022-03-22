@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="Aether.Physics2D" Version="1.6.1" />
 	  <PackageReference Include="Excubo.Blazor.Canvas" Version="3.0.12" />
-	  <PackageReference Include="Box2D.NetStandard" Version="2.4.6-alpha" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.3" PrivateAssets="all" />
   </ItemGroup>

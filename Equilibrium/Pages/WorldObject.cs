@@ -1,11 +1,8 @@
-﻿using System.Numerics;
-using Box2D.NetStandard.Collision.Shapes;
-using Box2D.NetStandard.Common;
-using Box2D.NetStandard.Dynamics.Bodies;
-using Box2D.NetStandard.Dynamics.Fixtures;
-using Box2D.NetStandard.Dynamics.World;
-using Excubo.Blazor.Canvas;
+﻿using Excubo.Blazor.Canvas;
 using Excubo.Blazor.Canvas.Contexts;
+using tainicom.Aether.Physics2D.Collision.Shapes;
+using tainicom.Aether.Physics2D.Common;
+using tainicom.Aether.Physics2D.Dynamics;
 
 namespace Equilibrium.Pages;
 
@@ -32,105 +29,107 @@ public class WorldObject
 
 public static class WorldObjectHelpers
 {
-    public static Body CreateRectangle(this World world, BodyType bodyType, Vector2 topLeft, float width, float height)
-    {
-        var bd = new BodyDef
-        {
-            type = bodyType,
-            position = topLeft,
-            angle = 0,
-            linearVelocity = new Vector2(0, 0),
-            angularVelocity = 0,
-            linearDamping = 0,
-            angularDamping = 0,
-            allowSleep = true,
-            awake = true,
-            fixedRotation = false,
-            bullet = false,
-            // bd.active = true;
-            gravityScale = 1
-        };
-        var body = world.CreateBody(bd);
+    //public static Body CreateRectangle(this World world, BodyType bodyType, Vector2 topLeft, float width, float height)
+    //{
+    //    //var bd = new BodyDef
+    //    //{
+    //    //    type = bodyType,
+    //    //    position = topLeft,
+    //    //    angle = 0,
+    //    //    linearVelocity = new Vector2(0, 0),
+    //    //    angularVelocity = 0,
+    //    //    linearDamping = 0,
+    //    //    angularDamping = 0,
+    //    //    allowSleep = true,
+    //    //    awake = true,
+    //    //    fixedRotation = false,
+    //    //    bullet = false,
+    //    //    // bd.active = true;
+    //    //    gravityScale = 1
+    //    //};
 
-        var fd = new FixtureDef
-        {
-            friction = 0.3f,
-            restitution = 0.8f,
-            density = 1f,
-            isSensor = false,
-            filter =
-            {
-                categoryBits = 1,
-                maskBits = 65535,
-                groupIndex = 0
-            }
-        };
-        var shape = new PolygonShape(width, height);
+    //    var body =world.CreateBody(topLeft, 0f, bodyType);
 
-        fd.shape = shape;
+    //    world.create
 
-        body.CreateFixture(fd);
-        return body;
-    }
+    //    body.CreateFixture(new PolygonShape())
+
+    //    var fd = new FixtureDef
+    //    {
+    //        friction = 0.3f,
+    //        restitution = 0.8f,
+    //        density = 1f,
+    //        isSensor = false,
+    //        filter =
+    //        {
+    //            categoryBits = 1,
+    //            maskBits = 65535,
+    //            groupIndex = 0
+    //        }
+    //    };
+    //    var shape = new PolygonShape(width, height);
+
+    //    fd.shape = shape;
+
+    //    body.CreateFixture(fd);
+    //    return body;
+    //}
 
 
-    public static Body CreateCircle(this World world, Vector2 position, float radius)
-    {
-        //world.
+    //public static Body CreateCircle(this World world, Vector2 position, float radius)
+    //{
+    //    //world.
 
-        var bd = new BodyDef
-        {
-            type = BodyType.Dynamic,
-            position = position,
-            angle = 0,
-            linearVelocity = new Vector2(0, 0),
-            angularVelocity = 0,
-            linearDamping = 0,
-            angularDamping = 0,
-            allowSleep = true,
-            awake = true,
-            fixedRotation = false,
-            bullet = true,
-            // bd.active = true;
-            gravityScale = 1
-        };
-        var body = world.CreateBody(bd);
+    //    var bd = new BodyDef
+    //    {
+    //        type = BodyType.Dynamic,
+    //        position = position,
+    //        angle = 0,
+    //        linearVelocity = new Vector2(0, 0),
+    //        angularVelocity = 0,
+    //        linearDamping = 0,
+    //        angularDamping = 0,
+    //        allowSleep = true,
+    //        awake = true,
+    //        fixedRotation = false,
+    //        bullet = true,
+    //        // bd.active = true;
+    //        gravityScale = 1
+    //    };
+    //    var body = world.CreateBody(bd);
 
-        var fd = new FixtureDef
-        {
-            friction = 0.3f,
-            restitution = 0.8f,
-            density = 1f,
-            isSensor = false,
-            filter =
-            {
-                categoryBits = 1,
-                maskBits = 65535,
-                groupIndex = 0
-            }
-        };
-        var shape = new CircleShape()
-        {
-            Center = new Vector2(0, 0),
-            Radius = radius
-        };
+    //    var fd = new FixtureDef
+    //    {
+    //        friction = 0.3f,
+    //        restitution = 0.8f,
+    //        density = 1f,
+    //        isSensor = false,
+    //        filter =
+    //        {
+    //            categoryBits = 1,
+    //            maskBits = 65535,
+    //            groupIndex = 0
+    //        }
+    //    };
+    //    var shape = new CircleShape()
+    //    {
+    //        Center = new Vector2(0, 0),
+    //        Radius = radius
+    //    };
 
-        fd.shape = shape;
+    //    fd.shape = shape;
 
-        body.CreateFixture(fd);
-        return body;
-    }
+    //    body.CreateFixture(fd);
+    //    return body;
+    //}
 
 
     public static async Task DrawBodyAsync(this Batch2D context, Body body)
     {
-        var current = body.GetFixtureList();
-
-        while (current is not null)
+        
+        foreach (var fixture in body.FixtureList?? Enumerable.Empty<Fixture>())
         {
-            await DrawFixtureAsync(context, current, body.Transform);
-
-            current = current.Next;
+            await DrawFixtureAsync(context, fixture, body.GetTransform());
         }
     }
 
@@ -175,7 +174,7 @@ public static class WorldObjectHelpers
     )
     {
         await context.BeginPathAsync();
-        var translated = transform.Transform(shape.Center);
+        var translated = transform.Transform(shape.Position);
         await context.ArcAsync(translated.X, translated.Y, shape.Radius, 0, Math.Tau);
 
         await context.StrokeAsync();
@@ -203,7 +202,7 @@ public static class WorldObjectHelpers
         await context.BeginPathAsync();
         bool first = true;
 
-        foreach (var shapeVertex in shape.GetVertices())
+        foreach (var shapeVertex in shape.Vertices)
         {
             var translated = transform.Transform(shapeVertex);
             if (first)
@@ -224,6 +223,14 @@ public static class WorldObjectHelpers
 
     public static Vector2 Transform(this Transform transform, Vector2 vector2)
     {
-        return transform.p + transform.q.Solve(vector2);
+        return transform.p + vector2;// + transform.q. .Solve(vector2);
     }
+
+    //public static Vector2 Solve(this Complex m, Vector2 b)
+    //{
+    //    float det = 1f / m. .GetDeterminant();
+    //    return new Vector2(
+    //        det * (m.M22 * b.X - m .M12 * b.Y),
+    //        det * (m.M11 * b.Y - m.M21 * b.X));
+    //}
 }

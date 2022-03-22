@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 # Run workflow on every push to the main branch
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   deploy-to-github-pages:
@@ -21,10 +21,10 @@ jobs:
       run: dotnet workload install wasm-tools
     # publishes Blazor project to the release-folder
     - name: Publish .NET Core Project
-      run: dotnet publish Sudoku.Blazor/Sudoku.Blazor.csproj -c Release -o release --nologo
+      run: dotnet publish Equilibrium/Equilibrium.csproj -c Release -o release --nologo
       # changes the base-tag in index.html from '/' to 'Myriad' to match GitHub Pages repository subdirectory
     - name: Change base-tag in index.html from / to GridPuzzles
-      run: sed -i 's/<base href="\/"\/>/<base href="\/GridPuzzles\/" \/>/g' release/wwwroot/index.html
+      run: sed -i 's/<base href="\/"\/>/<base href="\/Equilibrium\/" \/>/g' release/wwwroot/index.html
       
     # add .nojekyll file to tell GitHub pages to not treat this as a Jekyll project. (Allow files and folders starting with an underscore)
     - name: Add .nojekyll file
