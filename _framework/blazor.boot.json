@@ -3,15 +3,15 @@
   "config": [ ],
   "debugBuild": false,
   "entryAssembly": "Equilibrium",
-  "icuDataMode": 0,
+  "icuDataMode": 2,
   "linkerEnabled": true,
   "resources": {
     "assembly": {
       "Aether.Physics2D.dll": "sha256-A2FxhkXV82SIBsj7BN9vxmnlbxWVJEvCosgNOsfUbV8=",
       "Blazor.Canvas.dll": "sha256-aA0uGyFpEH85d6egA2HNNzmxuPAxDB9i7B\/KcHzxuN4=",
-      "Equilibrium.dll": "sha256-rJJxy1YKMi6rf0DaBc8JcggGU\/0Bn+2dO7wB9GKuDNM=",
+      "Equilibrium.dll": "sha256-xchaW4zkn6ICVUolQ97JfK2xN1E5oFtLSyQY+06ZoZU=",
       "Excubo.Generators.Blazor.Attributes.dll": "sha256-FS0UASOlI6EEkuqXobbjVvLY4P\/Z0QCumkHvP8wnCjs=",
-      "Microsoft.AspNetCore.Components.dll": "sha256-KVJZjl4yZ2m9911\/rHCJ2Ah\/a0p3JVjM18APm3pY17g=",
+      "Microsoft.AspNetCore.Components.dll": "sha256-pJWFwWPs9M85liVxfBI+K9lh8uKiZpU9\/cHXJFtqWjU=",
       "Microsoft.AspNetCore.Components.Web.dll": "sha256-MxnuF9KakZouzmrPjqC88Lfal0sG+LTyoU9oUrfk888=",
       "Microsoft.AspNetCore.Components.WebAssembly.dll": "sha256-Izlw\/SnIKXEmOa2P51s8rKqkVBfJ+MDvJMUpyP5lHkk=",
       "Microsoft.Extensions.Configuration.Abstractions.dll": "sha256-zhFtW4kE16TdrpPne9I1Cu9o0KYzrS50VE9MVSifJg4=",
@@ -37,7 +37,7 @@
       "System.Net.Http.dll": "sha256-Y+R+v1xthbR6V5nAxvxmQW9Scu9W4lTaSKvje4N\/Wjw=",
       "System.Net.Primitives.dll": "sha256-PI6JAvi3mAyPqoxxg2ptwZQ+3GTO23edFEUU4hYmJ9o=",
       "System.ObjectModel.dll": "sha256-hzU7EvZg2OcpBHz0XDc4Bfb85grIbJj2vOkA02WwVZ4=",
-      "System.Private.CoreLib.dll": "sha256-NwqvjDZY4MGEOKCQgky4FoMhO05UJ1Ew3fM+NI07rVE=",
+      "System.Private.CoreLib.dll": "sha256-XSme29zREmc8GVF7uO2q1V\/YqcZNiFBCP4qyoeZwuWM=",
       "System.Private.Runtime.InteropServices.JavaScript.dll": "sha256-n1Ds4LBU2+JmTUMnJHNI8YABKAoLCTdTo987XyTsiQA=",
       "System.Private.Uri.dll": "sha256-ChIG0+tpyMwdIHml8J+DPnqv8FaUrkHjuRjqf5spXdI=",
       "System.Private.Xml.dll": "sha256-hOHQooR61Lr6k4q4NtTNmqoBqpuy+abc\/lISqG5J2eA=",
@@ -56,13 +56,8 @@
     "libraryInitializers": null,
     "pdb": null,
     "runtime": {
-      "dotnet.6.0.3.fwzvfw49ed.js": "sha256-l6gYdm0Lh\/KNKm62Q7abY07bAMescbaTcXH6mMyNXlM=",
-      "dotnet.timezones.blat": "sha256-scXGarUHqfFWPq0d6kt1FgrQvd1\/ndIwUTFptznHbsc=",
-      "dotnet.wasm": "sha256-0Hz4s9DAxg0cJ2rfDLmyp2ckia9l9Tnw44Mlxyw599s=",
-      "icudt_CJK.dat": "sha256-WPyI4hWDPnOw62Nr27FkzGjdbucZnQD+Ph+GOPhAedw=",
-      "icudt_EFIGS.dat": "sha256-4RwaPx87Z4dvn77ie\/ro3\/QzyS+\/gGmO3Y\/0CSAXw4k=",
-      "icudt_no_CJK.dat": "sha256-OxylFgLJlFqixsj+nLxYVsv5iZLvfIKMpLf9hrWaChA=",
-      "icudt.dat": "sha256-Zuq0dWAsBm6\/2lSOsz7+H9PvFaRn61KIXHMMwXDfvyE="
+      "dotnet.6.0.3.fwzvfw49ed.js": "sha256-yVYJ4eibplzowIYHkM4ZWx\/v4ws2lyDkGYloOOCQ72g=",
+      "dotnet.wasm": "sha256-28sotkibV5IwQG7UH6mhsILU8ETTHKsADgr3L7m6mU0="
     },
     "satelliteResources": null
   }
