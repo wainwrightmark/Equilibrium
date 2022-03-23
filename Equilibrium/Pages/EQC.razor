@@ -1,25 +1,36 @@
 ﻿@using tainicom.Aether.Physics2D.Dynamics
 @using tainicom.Aether.Physics2D.Common
 
-<label>FPS: @_fps</label>
+
 
 <div id="canvasContainer" @ref="container" >
     <Canvas @onmousemove="MouseMoveCanvas"
             @onmouseup="MouseUpCanvas" 
             @onmousedown="MouseDownCanvas"
-            @ontouchend="TouchStartCanvas"
             @onmouseout="MouseOutCanvas"
-            @ref="helper_canvas" 
-            Width="@CanvasWidth"
-            Height="@CanvasHeight"  ></Canvas>
+            
+            @ontouchleave="TouchLeaveCanvas"
+            @ontouchmove="TouchMoveCanvas"
+
+            @ontouchend="TouchEndCanvas"
+            
+            @ref="_canvas" 
+            Width="@TransientState.CanvasWidth"
+            Height="@TransientState.CanvasHeight"  ></Canvas>
 </div>
 
-@foreach (var shape in Level.GetShapes())
+@foreach (var shape in GameState.RemainingShapes())
 {
-    var count = shape.Count - AddedShapes.Count(x => x == shape.Shape);
     
-    <ShapeOptionComponent GameShape="shape.Shape" Count="@count" SetChosenShape="SetChosenShape" ChosenShape="chosenShape"/>
+    <ShapeOptionComponent GameShape="shape.shape" Count="@shape.count" TransientState="TransientState"/>
+}
+@if (GameState.Message is not null)
+{
+    <br/>
+    <label>@GameState.Message</label>
 }
 
-<button @onclick="Clear">Restart</button>
-
+<br/>
+<button @onclick="()=> GameState.Restart(TransientState)">Restart</button>
+<br/>
+<label>FPS: @TransientState.FramesPerSecond</label>

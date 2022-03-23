@@ -1,13 +1,9 @@
 ﻿using Excubo.Blazor.Canvas;
 using Excubo.Blazor.Canvas.Contexts;
-using Majorsoft.Blazor.Components.Common.JsInterop.ElementInfo;
-using Majorsoft.Blazor.Components.Common.JsInterop.GlobalMouseEvents;
 using Majorsoft.Blazor.Components.Common.JsInterop.Resize;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Dynamics;
 using DotNetObjectReference = Microsoft.JSInterop.DotNetObjectReference;
 
 
@@ -15,65 +11,46 @@ namespace Equilibrium.Pages;
 
 public partial class EQC
 {
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] public IResizeHandler ResizeHandler { get; set; } = null!;
+
+
     private ElementReference container;
+    private Canvas _canvas = null!;
+    private Context2D _canvasContext = null!;
 
-    private Canvas helper_canvas;
-    private Context2D _canvasContext;
+    private TransientState TransientState { get; } = new();
 
-    private DomRect containerRect;
+    private GameState GameState { get; set; } = new GameState(new LevelOne());
 
-    public World World { get; private set; }
-
-    public List<Body> Bodies { get; private set; } = new();
-
-    public GameLevel Level { get; private set; } = new LevelOne();
-
-    private const float CanvasWidth = 400;
-    private const float CanvasHeight = 400;
-
-    [Inject] public IJSRuntime JsRuntime { get; set; }
-
-    [Inject] public IResizeHandler ResizeHandler { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _canvasContext = await helper_canvas.GetContext2DAsync();
-            containerRect = await container.GetClientRectAsync()!;
-            await ResizeHandler.RegisterPageResizeAsync(OnResize);
+            _canvasContext = await _canvas.GetContext2DAsync();
 
-            World = new World(new Vector2(0, 100));
-            Clear();
-
+            await OnResize();
+            await ResizeHandler.RegisterPageResizeAsync(_ => OnResize());
+            GameState.Restart(TransientState);
+            GameState.StateChanged+= delegate { StateHasChanged(); };
 
             await JsRuntime.InvokeAsync<object>("initGame",
                 new[] { DotNetObjectReference.Create(this) as object });
         }
     }
 
-    protected async Task OnResize(ResizeEventArgs args)
+    private readonly record struct CanvasPosition(double Left, double Top);
+
+    private CanvasPosition _canvasPosition;
+
+    protected async Task OnResize()
     {
-        containerRect = await container.GetClientRectAsync()!;
+        _canvasPosition = await JsRuntime.InvokeAsync<CanvasPosition>(
+            "eval",
+            $"let e = document.querySelector('[_bl_{container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e");
     }
 
-    // needed to calculate fps
-    float _lastTimestamp = 0;
-    float _fps = 0;
-
-    private float XScale = 1;
-    private float YScale = 1;
-    private float XOffset = 0;
-    private float YOffset = 0;
-
-
-    public void Clear()
-    {
-        World.Clear();
-        Bodies.Clear();
-        AddedShapes.Clear();
-        Bodies.AddRange(Level.SetupWorld(World, CanvasWidth, CanvasHeight, 60));
-    }
 
     /// <summary>
     /// This method will be called 60 times per second by the requestanimationframe from javascript.
@@ -87,100 +64,32 @@ public partial class EQC
     {
         await using var batch = _canvasContext.CreateBatch();
 
-        await batch.LineWidthAsync(1);
-
-        await batch.ResetTransformAsync();
-
-        await batch.ClearRectAsync(0, 0, width, height);
+        await GameState.StepAndDraw(timeStamp, batch, width, height, TransientState);
+    }
 
 
-        await batch.FillStyleAsync("blue");
-        await batch.StrokeStyleAsync("black");
+    private void MouseDownCanvas(MouseEventArgs e)
+    {
+        OnClick(e.ClientX, e.ClientY);
+    }
 
-        await batch.SetTransformAsync(
-            XScale,
-            0,
-            0,
-            YScale,
-            XOffset,
-            YOffset
-        );
 
-        var dt = timeStamp - _lastTimestamp;
-        var newFps = 1000 / (timeStamp - _lastTimestamp);
-        if (Math.Abs(newFps - _fps) >= 2)
-            _fps = newFps;
-        _lastTimestamp = timeStamp;
+    private void TouchEndCanvas(TouchEventArgs e)
+    {
+        var touch = e.ChangedTouches.FirstOrDefault();
 
-        World.Step(dt / 1000);
-
-        while (_bodiesToAdd.TryPop(out var bodyToAdd))
+        if (touch is not null)
         {
-            var newBody = bodyToAdd.Shape.Shape.Create(World, bodyToAdd.Position, bodyToAdd.Shape.Rotation);
-            Bodies.Add(newBody);
-        }
-
-        foreach (var body in Bodies)
-        {
-            await batch.DrawBodyAsync(body);
-        }
-
-        await batch.FillStyleAsync("yellow");
-
-        if (mouseX is not null && mouseY is not null && chosenShape is not null)
-        {
-            foreach (var shape in chosenShape.Shape.GetShapes())
-            {
-                await batch.DrawShapeAsync(
-                    shape,
-                    new Transform(new Vector2((float)mouseX.Value, (float)mouseY.Value), chosenShape.Rotation));
-            }
+            OnClick(touch.ClientX, touch.ClientY);
         }
     }
 
-    private ChosenShape? chosenShape { get; set; }
-
-    public void SetChosenShape(ChosenShape? shape)
+    private void OnClick(double clientX, double clientY)
     {
-        chosenShape = shape;
-    }
+        var x = clientX - _canvasPosition.Left;
+        var y = clientY - _canvasPosition.Top;
 
-    private List<GameShape> AddedShapes = new();
-    private Stack<(ChosenShape Shape, Vector2 Position)> _bodiesToAdd = new();
-
-    private Task MouseDownCanvas(MouseEventArgs e)
-    {
-        return OnClick(e.ClientX, e.ClientY);
-    }
-
-    private Task TouchStartCanvas(TouchEventArgs e)
-    {
-        if (e.Touches.Any())
-        {
-            return OnClick(e.Touches.First().ClientX, e.Touches.First().ClientY);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private async Task OnClick(double clientX, double clientY)
-    {
-        if (chosenShape is not null)
-        {
-            var x = clientX - containerRect.X;
-            var y = clientY - containerRect.Y;
-
-            var vec = new Vector2(
-                ((float)x - XOffset) / XScale,
-                ((float)y - YOffset) / YScale);
-
-            _bodiesToAdd.Push(
-                (chosenShape, vec)
-            );
-            AddedShapes.Add(chosenShape.Shape);
-
-            chosenShape = null;
-        }
+        GameState.MaybeAddChosenShape((float)x, (float)y, TransientState);
     }
 
 
@@ -190,18 +99,31 @@ public partial class EQC
         //mousedown = false;
     }
 
-    private double? mouseX = null;
-    private double? mouseY = null;
-
-    async Task MouseMoveCanvas(MouseEventArgs e)
+    private void MouseMoveCanvas(MouseEventArgs e)
     {
-        mouseX = e.ClientX - containerRect.X;
-        mouseY = e.ClientY - containerRect.Y;
+        var x = e.ClientX - _canvasPosition.Left;
+        var y = e.ClientY - _canvasPosition.Top;
+        TransientState.MousePosition = new((float)x, (float)y);
     }
 
-    async Task MouseOutCanvas(MouseEventArgs e)
+    private void TouchMoveCanvas(TouchEventArgs e)
     {
-        mouseX = null;
-        mouseY = null;
+        var touch = e.ChangedTouches.FirstOrDefault();
+        if (touch is not null)
+        {
+            var x = touch.ClientX - _canvasPosition.Left;
+            var y = touch.ClientY - _canvasPosition.Top;
+            TransientState.MousePosition = new((float)x, (float)y);
+        }
+    }
+
+    private void MouseOutCanvas(MouseEventArgs e)
+    {
+        TransientState.MousePosition = null;
+    }
+
+    private void TouchLeaveCanvas(TouchEventArgs e)
+    {
+        TransientState.MousePosition = null;
     }
 }
