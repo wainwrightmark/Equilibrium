@@ -1,13 +1,25 @@
-﻿@inject IJSRuntime JsRuntime;
-
-<div id="canvasContainer" @ref="container" >
-    <Canvas @onmousemove="MouseMoveCanvasAsync"
-            @onmouseup="MouseUpCanvas" 
-            @onmousedown="MouseDownCanvas"
-            @ref="helper_canvas" 
-            Width="400"
-            Height="400"  ></Canvas>
-</div>
-
+﻿@using tainicom.Aether.Physics2D.Dynamics
+@using tainicom.Aether.Physics2D.Common
 
 <label>FPS: @_fps</label>
+
+<div id="canvasContainer" @ref="container" >
+    <Canvas @onmousemove="MouseMoveCanvas"
+            @onmouseup="MouseUpCanvas" 
+            @onmousedown="MouseDownCanvas"
+            @ontouchend="TouchStartCanvas"
+            @onmouseout="MouseOutCanvas"
+            @ref="helper_canvas" 
+            Width="@CanvasWidth"
+            Height="@CanvasHeight"  ></Canvas>
+</div>
+
+@foreach (var shape in Level.GetShapes())
+{
+    var count = shape.Count - AddedShapes.Count(x => x == shape.Shape);
+    
+    <ShapeOptionComponent GameShape="shape.Shape" Count="@count" SetChosenShape="SetChosenShape" ChosenShape="chosenShape"/>
+}
+
+<button @onclick="Clear">Restart</button>
+

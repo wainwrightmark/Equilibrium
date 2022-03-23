@@ -1,0 +1,121 @@
+﻿@using Excubo.Blazor.Canvas.Contexts
+@using tainicom.Aether.Physics2D.Common
+
+
+<Canvas
+    @onmousedown="MouseDownCanvas"
+    @ontouchend="TouchStartCanvas"
+    @ref="helper_canvas"
+    Width="@Width"
+    Height="@Height">
+</Canvas>
+<label>@Count</label>
+<button @onclick="Rotate" disabled="@(GameShape.RotationInterval is null)">↻</button>
+
+@code {
+
+    private Canvas helper_canvas;
+    private Context2D _canvasContext;
+
+    [Parameter]
+    public GameShape GameShape { get; set; }
+
+    [Parameter]
+    public int Count { get; set; }
+
+    [Parameter]
+    public Action<ChosenShape?> SetChosenShape { get; set; }
+
+    [Parameter]
+    public ChosenShape? ChosenShape { get; set; }
+
+    public int NumberOfRotations { get; private set; } = 0;
+
+    private ChosenShape ThisAsChosenShape => new(GameShape, NumberOfRotations);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _canvasContext = await helper_canvas.GetContext2DAsync();
+        }
+        await Draw();
+    }
+
+        public const float Width = 100;
+        public const float Height = 100;
+
+    public async Task Rotate()
+    {
+        NumberOfRotations++;
+
+        if (ChosenShape?.Shape == GameShape)
+        {
+            SetChosenShape(ThisAsChosenShape);
+        }
+
+        await Draw();
+    }
+
+    public async Task Draw()
+    {
+        string color;
+        if (Count <= 0)
+        {
+            color = "grey";
+        }
+        else if (ChosenShape?.Shape == GameShape)
+        {
+            color = "green";
+        }
+        else
+        {
+            color = "yellow";
+        }
+
+        await using var batch = _canvasContext.CreateBatch();
+
+        await batch.ClearRectAsync(0, 0, Width, Height);
+
+        await batch.LineWidthAsync(1);
+
+        await batch.FillStyleAsync(color);
+        await batch.StrokeStyleAsync("black");
+
+        var rotation = ThisAsChosenShape.Rotation;
+        foreach (var shape in GameShape.GetShapes())
+        {
+            await batch.DrawShapeAsync(
+                shape,
+                new Transform(new Vector2(Width / 2, Height / 2), rotation));
+        }
+    }
+
+    private Task MouseDownCanvas(MouseEventArgs e)
+    {
+        return OnClick();
+    }
+
+    private Task TouchStartCanvas(TouchEventArgs obj)
+    {
+        return OnClick();
+    }
+
+    private async Task OnClick()
+    {
+        if (Count > 0)
+        {
+            if (ChosenShape?.Shape == GameShape)
+            {
+                SetChosenShape(null);
+            }
+            else
+            {
+                SetChosenShape(ThisAsChosenShape);
+            }
+
+            await Draw();
+        }
+    }
+
+}
