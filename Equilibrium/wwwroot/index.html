@@ -7,8 +7,7 @@
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Equilibrium</title>
-    <base href="/" />
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <base href="/"/>
     <link href="css/app.css" rel="stylesheet" />
 
     <style>
@@ -21,8 +20,11 @@
 
 </head>
 
-<body>
-    <div id="app">Loading...</div>
+<body overscroll-behavior: contain;>
+<div id="app">
+
+    <div class="spinner"></div>
+</div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
@@ -30,7 +32,31 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
-<script src="GameLoop.js"></script>
+    <script src="GameLoop.js"></script>
 </body>
 
 </html>
+
+<style>
+    .spinner {
+        border: 16px solid silver;
+        border-top: 16px solid #337AB7;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        animation: spin 700ms linear infinite;
+        top: 40%;
+        left: 55%;
+        position: absolute;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg)
+        }
+
+        100% {
+            transform: rotate(360deg)
+        }
+    }
+</style>
