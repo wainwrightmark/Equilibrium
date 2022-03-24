@@ -1,38 +1,71 @@
-﻿using tainicom.Aether.Physics2D.Collision.Shapes;
-using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Dynamics;
+﻿namespace Equilibrium.Pages;
 
-namespace Equilibrium.Pages;
+public static class Colors
+{
+    public const string Grey = "#a5a5a5";
+    public const string Black = "#111111";
+    public const string Green = "green";
+
+    public static readonly string[] ShapeColors = new[]
+    {
+        "#3b8183", "#7ab317", "#7b3b3b", "#ff6b6b", "#f0a830", "#3299bb", "#b3cc57", "#d3ce3d", "#dfba69", "#7ccce5",
+        "#53777a"
+    };
+}
+
+
+public static class GameShapeHelper
+{
+    public static IReadOnlyList<GameShape> AllGameShapes { get; }
+
+        = new List<GameShape>()
+        {
+            CircleGameShape.Instance,
+            HemisphereGameShape.Instance,
+            BoxGameShape.Instance,
+            EllGameShape.Instance,
+            LollipopGameShape.Instance,
+            TriangleGameShape.Instance,
+            CrossGameShape.Instance
+        };
+
+    private static readonly IReadOnlyDictionary<string, GameShape> GameShapeNameDictionary
+        = AllGameShapes.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
+
+    public static GameShape GetShapeByName(string name) => GameShapeNameDictionary[name];
+}
 
 public abstract class GameShape
 {
-    public abstract float? RotationInterval { get; }
+    public abstract int? RotationFraction { get; }
+
+    public float? RotationInterval =>
+        (float)Math.Tau / RotationFraction;
+
+    public float GetRotation(int numberOfRotations)
+    {
+        if (RotationInterval is null) return 0;
+        return RotationInterval.Value * numberOfRotations;
+    }
 
     public const float Density = 1;
 
-    public abstract Body Create(World world, Vector2 position, float rotation, float scale);
+    public abstract Body Create(World world, Vector2 position, float rotation, float scale, BodyType bodyType);
 
     public abstract IEnumerable<Shape> GetShapes(float scale);
 
     public abstract string Name { get; }
 
-    public static IEnumerable<GameShape> AllGameShapes()
-    {
-        yield return CircleGameShape.Instance;
-        yield return HemisphereGameShape.Instance;
-        yield return BoxGameShape.Instance;
-        yield return EllGameShape.Instance;
-        yield return LollipopGameShape.Instance;
-        yield return TriangleGameShape.Instance;
-        yield return CrossGameShape.Instance;
-    }
+    public abstract string Color { get; }
+
+    
+
+    public abstract Vector2 GetLowestPosition(float shapeScale, int rotations);
 }
 
 public class CircleGameShape : GameShape
 {
-    private CircleGameShape()
-    {
-    }
+    private CircleGameShape() { }
 
     public static CircleGameShape Instance { get; } = new();
 
@@ -40,21 +73,30 @@ public class CircleGameShape : GameShape
     public override string Name => "Circle";
 
     /// <inheritdoc />
-    public override float? RotationInterval => null;
+    public override int? RotationFraction => null;
 
     /// <inheritdoc />
-    public override Body Create(World world, Vector2 position, float rotation, float shapeScale)
+    public override Body Create(World world, Vector2 position, float rotation, float shapeScale, BodyType bodyType)
     {
         return world.CreateCircle(shapeScale / 2,
             Density,
             position,
-            BodyType.Dynamic);
+            bodyType);
     }
 
     /// <inheritdoc />
     public override IEnumerable<Shape> GetShapes(float scale)
     {
         yield return new CircleShape(scale / 2, Density);
+    }
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[0];
+
+    /// <inheritdoc />
+    public override Vector2 GetLowestPosition(float shapeScale, int rotations)
+    {
+        return new Vector2(0, -(shapeScale / 2));
     }
 }
 
@@ -71,19 +113,21 @@ public class HemisphereGameShape : ComplexPolygonGameShape
     public override string Name => "Hemisphere";
 
     /// <inheritdoc />
-    public override float? RotationInterval => (float) Math.Tau / 4f;
+    public override int? RotationFraction => 4;
 
 
     /// <inheritdoc />
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
         yield return PolygonTools.CreateArc((float)Math.PI, 16, scale / 2);
-
-        //yield return PolygonTools.CreateCapsule(scale / 2 + float.Epsilon, scale / 4 , 16, scale /4, 1);
     }
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[1];
+
 }
 
-public class BoxGameShape : GameShape
+public class BoxGameShape : ComplexPolygonGameShape
 {
     private BoxGameShape()
     {
@@ -95,45 +139,54 @@ public class BoxGameShape : GameShape
     public override string Name => "Box";
 
     /// <inheritdoc />
-    public override float? RotationInterval => (float)Math.Tau / 8;
+    public override int? RotationFraction => 8;
 
     /// <inheritdoc />
-    public override Body Create(World world, Vector2 position, float rotation, float scale)
+    protected override IEnumerable<Vertices> GetVertices(float scale)
     {
-        return world.CreateRectangle(scale, scale, 1, position, rotation, BodyType.Dynamic);
+        yield return PolygonTools.CreateRectangle(scale / 2f, scale / 2f);
     }
 
     /// <inheritdoc />
-    public override IEnumerable<Shape> GetShapes(float scale)
-    {
-        yield return new PolygonShape(PolygonTools.CreateRectangle(scale / 2f, scale / 2f), Density);
-    }
+    public override string Color => Colors.ShapeColors[2];
 }
-
 
 public abstract class ComplexPolygonGameShape : GameShape
 {
     /// <inheritdoc />
-    public override Body Create(World world, Vector2 position, float rotation, float scale)
+    public override Body Create(World world, Vector2 position, float rotation, float scale, BodyType bodyType)
     {
-        return world.CreateCompoundPolygon(GetVertices(scale).ToList(), Density, position, rotation, BodyType.Dynamic);
+        return world.CreateCompoundPolygon(GetVertices(scale).ToList(), Density, position, rotation, bodyType);
     }
 
     /// <inheritdoc />
     public override IEnumerable<Shape> GetShapes(float scale)
     {
-        foreach (var vertices in GetVertices(scale).ToList())
+        foreach (var vertices in GetVertices(scale))
         {
             yield return new PolygonShape(vertices, 1);
         }
     }
 
     protected abstract IEnumerable<Vertices> GetVertices(float scale);
+
+    /// <inheritdoc />
+    public override Vector2 GetLowestPosition(float shapeScale, int rotations)
+    {
+        var transform = new Transform(Vector2.Zero, GetRotation(rotations));
+        var result= GetVertices(shapeScale)
+            .SelectMany(x=>x)
+            .Select(x=> transform.Transform(x)).MinBy(x=>x.Y);
+        return result;
+    }
+    
 }
 
 public class EllGameShape : ComplexPolygonGameShape
 {
-    private EllGameShape() { }
+    private EllGameShape()
+    {
+    }
 
     public static EllGameShape Instance { get; } = new();
 
@@ -141,7 +194,7 @@ public class EllGameShape : ComplexPolygonGameShape
     public override string Name => "Ell";
 
     /// <inheritdoc />
-    public override float? RotationInterval => (float)Math.Tau / 4;
+    public override int? RotationFraction => 4;
 
 
     protected override IEnumerable<Vertices> GetVertices(float scale)
@@ -152,16 +205,21 @@ public class EllGameShape : ComplexPolygonGameShape
         yield return PolygonTools.CreateRectangle(qScale, 6 * qScale,
             new Vector2(3f * qScale, 5f * qScale), 0);
     }
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[3];
 }
 
 public class LollipopGameShape : ComplexPolygonGameShape
 {
-    private LollipopGameShape() { }
+    private LollipopGameShape()
+    {
+    }
 
     public static LollipopGameShape Instance { get; } = new();
 
     /// <inheritdoc />
-    public override float? RotationInterval => (float) Math.Tau / 4;
+    public override int? RotationFraction => 4;
 
     /// <inheritdoc />
     public override string Name => "Lollipop";
@@ -172,16 +230,21 @@ public class LollipopGameShape : ComplexPolygonGameShape
         yield return PolygonTools.CreateCircle(scale / 4, 16);
         yield return PolygonTools.CreateRectangle(scale / 8, scale / 2, new Vector2(0, scale / 2), 0);
     }
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[4];
 }
 
 public class TriangleGameShape : ComplexPolygonGameShape
 {
-    private TriangleGameShape() { }
+    private TriangleGameShape()
+    {
+    }
 
     public static TriangleGameShape Instance { get; } = new();
 
     /// <inheritdoc />
-    public override float? RotationInterval => (float) Math.Tau / 8;
+    public override int? RotationFraction => 8;
 
     /// <inheritdoc />
     public override string Name => "Triangle";
@@ -192,11 +255,14 @@ public class TriangleGameShape : ComplexPolygonGameShape
     {
         yield return new Vertices(new[]
         {
-            new Vector2(scale / 4,  scale / 2),
-            new Vector2(-scale /4, 0),
+            new Vector2(scale / 4, scale / 2),
+            new Vector2(-scale / 4, 0),
             new Vector2(scale / 4, -scale / 2),
         });
     }
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[5];
 }
 
 public class CrossGameShape : ComplexPolygonGameShape
@@ -211,12 +277,15 @@ public class CrossGameShape : ComplexPolygonGameShape
     public override string Name => "Cross";
 
     /// <inheritdoc />
-    public override float? RotationInterval => (float)Math.Tau / 8;
+    public override int? RotationFraction => 8;
 
 
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
         yield return PolygonTools.CreateRectangle(scale / 2F, scale / 8f);
-        yield return PolygonTools.CreateRectangle(scale / 8F,  scale / 2f);
+        yield return PolygonTools.CreateRectangle(scale / 8F, scale / 2f);
     }
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[6];
 }

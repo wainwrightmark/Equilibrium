@@ -56,28 +56,39 @@
 
     public async Task Draw()
     {
-        string color;
+        string fillColor;
+        string strokeColor;
+        int lineWidth;
         if (Count <= 0)
         {
-            color = "grey";
-        }
-        else if (TransientState.ChosenShape?.Shape == GameShape)
-        {
-            color = "green";
+            fillColor = Colors.Grey;
+            strokeColor = Colors.Black;
+            lineWidth = 1;
         }
         else
         {
-            color = "yellow";
+            if (TransientState.ChosenShape?.Shape == GameShape)
+            {
+                lineWidth = 3;
+                strokeColor = Colors.Green;
+            }
+                
+            else
+            {
+                lineWidth = 1;
+                strokeColor = Colors.Black;
+            }
+            fillColor = GameShape.Color;
         }
 
         await using var batch = _canvasContext.CreateBatch();
 
         await batch.ClearRectAsync(0, 0, Width, Height);
 
-        await batch.LineWidthAsync(1);
+        await batch.LineWidthAsync(lineWidth);
 
-        await batch.FillStyleAsync(color);
-        await batch.StrokeStyleAsync("black");
+        await batch.FillStyleAsync(fillColor);
+        await batch.StrokeStyleAsync(strokeColor);
 
         var rotation = ThisAsChosenShape.Rotation;
         foreach (var shape in GameShape.GetShapes(60))

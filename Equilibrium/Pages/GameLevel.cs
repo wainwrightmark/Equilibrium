@@ -1,122 +1,69 @@
-﻿using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Dynamics;
+﻿
 
 namespace Equilibrium.Pages;
 
-public abstract class GameLevel
+
+public sealed record Level(string InitialShape,
+    int InitialShapeRotations,
+    IReadOnlyList<(string Shape, int Number)> Shapes)
 {
-    public abstract string Name { get; }
+    public static readonly Level Basic =
 
-    public static IEnumerable<GameLevel> Levels
+        new (BoxGameShape.Instance.Name, 0,
+            GameShapeHelper.AllGameShapes.Select(x => (Shape: x.Name,Number: 1))
+                .ToList()
+        );
+
+    public static Level MakeRandomLevel(Random random)
     {
-        get
-        {
-            yield return new LevelZero();
-            yield return new LevelOne();
-            yield return new LevelTwo();
-        }
+        var initialShape = RandomShape(random);
+        var initialRotation =
+            initialShape.RotationFraction is null ? 0 : random.Next(initialShape.RotationFraction.Value);
+        var totalShapes = random.Next(4, 9);
+
+        var shapes = Enumerable.Range(0, totalShapes)
+            .Select(_ => RandomShape(random))
+            .GroupBy(x => x.Name)
+            .Select(x => (x.Key, x.Count()))
+            .ToList();
+
+        return new Level(initialShape.Name, initialRotation, shapes);
+
     }
 
-    public abstract IEnumerable<(GameShape Shape, int Count)> GetShapes();
-
-    public abstract IEnumerable<Body> SetupWorld(World world, float width, float height, float shapeScale);
-
-
-    protected static IEnumerable<Body> BuildWalls(World world, float width, float height, float shapeScale)
+    private static GameShape RandomShape(Random random)
     {
-        yield return SetAsWall(world.CreateEdge(new Vector2(0, 0), new Vector2(width, 0))) ;
-        yield return SetAsWall(world.CreateEdge(new Vector2(width, 0), new Vector2(width, height)));
-        yield return SetAsWall(world.CreateEdge(new Vector2(width, height), new Vector2(0, height)));
-        yield return SetAsWall(world.CreateEdge(new Vector2(0, height), new Vector2(0, 0)));
+        return GameShapeHelper.AllGameShapes[random.Next(GameShapeHelper.AllGameShapes.Count)];
+    }       
+
+    public IEnumerable<(GameShape Shape, int Count)> GetShapes()
+    {
+        return Shapes.Select(valueTuple => (GameShapeHelper.GetShapeByName(valueTuple.Shape), valueTuple.Number));
     }
 
-    private static Body SetAsWall(Body b)
+    public IEnumerable<ShapeBodyPair> SetupWorld(World world, float width, float height, float shapeScale)
     {
-        b.Tag = "wall";
-        return b;
+        //Walls
+        yield return new (null, world.CreateEdge(new Vector2(0, 0), new Vector2(width, 0)), ShapeBodyType.Wall) ;
+        yield return new (null, world.CreateEdge(new Vector2(width, 0), new Vector2(width, height)), ShapeBodyType.Wall) ;
+        yield return new (null, world.CreateEdge(new Vector2(width, height), new Vector2(0, height)), ShapeBodyType.Wall) ;
+        yield return new (null, world.CreateEdge(new Vector2(0, height), new Vector2(0, 0)), ShapeBodyType.Wall) ;
+
+        var initialShape = GameShapeHelper.GetShapeByName(InitialShape);
+
+        var lowestPosition = initialShape.GetLowestPosition(shapeScale, InitialShapeRotations);
+
+        var initialShapePosition = new Vector2(width / 2, lowestPosition.Y + height);
+        var initialRotation = initialShape.RotationInterval is null
+            ? 0
+            : initialShape.RotationInterval.Value * InitialShapeRotations;
+
+
+        var body = initialShape.Create(world, initialShapePosition, initialRotation, shapeScale, BodyType.Static);
+
+        yield return new ShapeBodyPair(initialShape, body, ShapeBodyType.Static);
     }
-}
-
-public class LevelZero : GameLevel
-{
-    /// <inheritdoc />
-    public override string Name => "Level Zero";
-
-    /// <inheritdoc />
-    public override IEnumerable<Body> SetupWorld(World world, float width, float height, float shapeScale)
-    {
-        foreach (var wall in BuildWalls(world, width, height, shapeScale))
-        {
-            yield return wall;
-        }
-
-        yield return world.CreateRectangle(shapeScale / 2, shapeScale * 3, 
-            1, 
-            new Vector2(width / 2,height));
-    }
-
-    /// <inheritdoc />
-    public override IEnumerable<(GameShape Shape, int Count)> GetShapes()
-    {
-        foreach (var gameShape in GameShape.AllGameShapes())
-        {
-            yield return (gameShape, 1);
-        }
-    }
-}
+    
 
 
-public class LevelOne : GameLevel
-{
-    /// <inheritdoc />
-    public override string Name => "Level One";
-
-    /// <inheritdoc />
-    public override IEnumerable<Body> SetupWorld(World world, float width, float height, float shapeScale)
-    {
-        foreach (var wall in BuildWalls(world, width, height, shapeScale))
-        {
-            yield return wall;
-        }
-
-        yield return world.CreateRectangle(shapeScale / 2, shapeScale * 3, 
-            1, 
-            new Vector2(width / 2,height));
-    }
-
-    /// <inheritdoc />
-    public override IEnumerable<(GameShape Shape, int Count)> GetShapes()
-    {
-        yield return (BoxGameShape.Instance, 2);
-        yield return (CrossGameShape.Instance, 2);
-        yield return (CircleGameShape.Instance, 1);
-    }
-}
-
-public class LevelTwo : GameLevel
-{
-    /// <inheritdoc />
-    public override string Name => "Level Two";
-
-    /// <inheritdoc />
-    public override IEnumerable<Body> SetupWorld(World world, float width, float height, float shapeScale)
-    {
-        foreach (var wall in BuildWalls(world, width, height, shapeScale))
-        {
-            yield return wall;
-        }
-
-        yield return world.CreateRectangle(shapeScale / 2, shapeScale * 3, 
-            1, 
-            new Vector2(width / 2,height));
-    }
-
-    /// <inheritdoc />
-    public override IEnumerable<(GameShape Shape, int Count)> GetShapes()
-    {
-        yield return (BoxGameShape.Instance, 1);
-        yield return (CrossGameShape.Instance, 1);
-        yield return (EllGameShape.Instance, 2);
-        yield return (HemisphereGameShape.Instance, 2);
-    }
 }

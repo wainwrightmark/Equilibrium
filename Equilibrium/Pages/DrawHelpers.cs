@@ -1,20 +1,23 @@
-﻿using Excubo.Blazor.Canvas;
-using Excubo.Blazor.Canvas.Contexts;
-using tainicom.Aether.Physics2D.Collision.Shapes;
-using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Dynamics;
-using Complex = tainicom.Aether.Physics2D.Common.Complex;
-using Vector2 = tainicom.Aether.Physics2D.Common.Vector2;
-
-namespace Equilibrium.Pages;
+﻿namespace Equilibrium.Pages;
 
 public static class DrawHelpers
 {
-    public static async Task DrawBodyAsync(this Batch2D context, Body body)
+    public static async Task DrawBodyAsync(this Batch2D context, ShapeBodyPair shapeBodyPair)
     {
-        foreach (var fixture in body.FixtureList ?? Enumerable.Empty<Fixture>())
+        if(shapeBodyPair.Shape is null)return;
+        
+        string color;
+        if (shapeBodyPair.Type == ShapeBodyType.Static)
+            color = Colors.Grey;
+        else color = shapeBodyPair.Shape.Color;
+
+        await context.FillStyleAsync(color);
+
+        var transform = shapeBodyPair.Body.GetTransform();
+
+        foreach (var fixture in shapeBodyPair.Body.FixtureList ?? Enumerable.Empty<Fixture>())
         {
-            await DrawFixtureAsync(context, fixture, body.GetTransform());
+            await DrawFixtureAsync(context, fixture, transform);
         }
     }
 

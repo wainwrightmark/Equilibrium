@@ -1,8 +1,4 @@
-﻿using Excubo.Blazor.Canvas.Contexts;
-using tainicom.Aether.Physics2D.Common;
-using tainicom.Aether.Physics2D.Dynamics;
-
-namespace Equilibrium.Pages;
+﻿namespace Equilibrium.Pages;
 
 public class TransientState
 {
@@ -46,7 +42,7 @@ public readonly record struct ScaleConstants(float XScale, float YScale, float X
 
 public class GameState
 {
-    public GameState(GameLevel level)
+    public GameState(Level level)
     {
         World = new World(new Vector2(0, Gravity));
         Level = level;
@@ -54,8 +50,8 @@ public class GameState
 
 
     public World World { get; }
-    public GameLevel Level { get; private set; }
-    public List<Body> Bodies { get; } = new();
+    public Level Level { get; private set; }
+    public List<ShapeBodyPair> Bodies { get; } = new();
     public Stack<(ChosenShape Shape, Vector2 Position)> ShapesToAdd { get; } = new();
 
     public List<GameShape> AddedShapes { get; } = new();
@@ -82,7 +78,7 @@ public class GameState
 
     public event Action<GameState> StateChanged;
 
-    public void ChangeLevel(GameLevel newLevel, TransientState transientState)
+    public void ChangeLevel(Level newLevel, TransientState transientState)
     {
         Level = newLevel;
         Restart(transientState);
@@ -146,8 +142,7 @@ public class GameState
         await batch.ClearRectAsync(0, 0, width, height);
 
 
-        await batch.FillStyleAsync("blue");
-        await batch.StrokeStyleAsync("black");
+        await batch.StrokeStyleAsync(Colors.Black);
 
         await batch.SetTransformAsync(
             ScaleConstants.XScale,
@@ -163,10 +158,12 @@ public class GameState
         World.Step(dt / 1000);
 
         var shapeAdded = false;
-        while (ShapesToAdd.TryPop(out var bodyToAdd))
+        while (ShapesToAdd.TryPop(out var shapeToAdd))
         {
-            var newBody = bodyToAdd.Shape.Shape.Create(World, bodyToAdd.Position, bodyToAdd.Shape.Rotation, Scale);
-            Bodies.Add(newBody);
+            var newBody = shapeToAdd.Shape.Shape.Create(World, 
+                shapeToAdd.Position, 
+                shapeToAdd.Shape.Rotation, Scale, BodyType.Dynamic);
+            Bodies.Add(new ShapeBodyPair(shapeToAdd.Shape.Shape, newBody, ShapeBodyType.Dynamic));
             shapeAdded = true;
         }
 
@@ -181,9 +178,9 @@ public class GameState
 
         foreach (var body in Bodies)
         {
-            if (IsWin is null && body.Tag is "wall")
+            if (IsWin is null && body.Type == ShapeBodyType.Wall)
             {
-                var contact = body.ContactList;
+                var contact = body.Body.ContactList;
                 while (contact is not null)
                 {
                     if (contact.Other.BodyType == BodyType.Dynamic)
@@ -195,18 +192,24 @@ public class GameState
                 }
             }
 
+            if (body.Shape is not null)
+            {
+                await batch.DrawBodyAsync(body);
+            }
 
-            await batch.DrawBodyAsync(body);
+            
         }
 
         await batch.ResetTransformAsync();
-        await batch.FillStyleAsync("yellow");
-        await batch.LineWidthAsync(1);
+        
 
         var chosenShape = transientState.ChosenShape;
 
         if (transientState.MousePosition is not null && chosenShape.HasValue)
         {
+            await batch.FillStyleAsync(chosenShape.Value.Shape.Color);
+            await batch.LineWidthAsync(3);
+
             var (x, y) = transientState.MousePosition.Value;
 
             foreach (var shape in chosenShape.Value.Shape.GetShapes(ShapeScale))

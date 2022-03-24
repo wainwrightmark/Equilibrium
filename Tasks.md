@@ -1,0 +1,8 @@
+- [ ] Fix weird disappearing bug
+- [ ] Improve touch support
+- [ ] Let users save and star levels
+- [ ] Come up with level naming system
+- [ ] Timer resets if a shape falls off
+- [ ] More shapes
+- [ ] Shapes have other properties?
+- [x] Colors in ShapeOptionComponents
