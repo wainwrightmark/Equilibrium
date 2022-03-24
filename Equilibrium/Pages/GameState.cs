@@ -54,7 +54,7 @@ public class GameState
 
 
     public World World { get; }
-    public GameLevel Level { get; }
+    public GameLevel Level { get; private set; }
     public List<Body> Bodies { get; } = new();
     public Stack<(ChosenShape Shape, Vector2 Position)> ShapesToAdd { get; } = new();
 
@@ -81,6 +81,12 @@ public class GameState
     public const float Scale = ShapeScale / GameScale;
 
     public event Action<GameState> StateChanged;
+
+    public void ChangeLevel(GameLevel newLevel, TransientState transientState)
+    {
+        Level = newLevel;
+        Restart(transientState);
+    }
 
     public void Restart(TransientState transientState)
     {

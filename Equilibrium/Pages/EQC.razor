@@ -34,3 +34,31 @@
 <button @onclick="()=> GameState.Restart(TransientState)">Restart</button>
 <br/>
 <label>FPS: @TransientState.FramesPerSecond</label>
+
+<select @bind="LevelName">
+    @foreach (var level in GameLevel.Levels)
+    {
+        <option value="@level.Name">@level.Name</option>
+    }
+</select>
+
+@code{
+
+    public string LevelName
+    {
+        get => this.GameState.Level.Name;
+
+        set
+        {
+            if (value != this.GameState.Level.Name)
+            {
+                var level = GameLevel.Levels.FirstOrDefault(x => x.Name == value);
+                if (level != null)
+                {
+                    GameState.ChangeLevel(level, TransientState);
+                }
+            }
+        }
+    }
+
+}

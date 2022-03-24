@@ -21,7 +21,7 @@ public partial class EQC
 
     private TransientState TransientState { get; } = new();
 
-    private GameState GameState { get; set; } = new GameState(new LevelOne());
+    private GameState GameState { get; set; } = new (new LevelZero());
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
