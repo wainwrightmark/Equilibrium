@@ -1,0 +1,45 @@
+﻿
+<div>
+    @for (var i = 1; i <= MaxRating; i++)
+    {
+        var i1 = i;
+        var c = i <= Rating ? '★' : '☆';
+    
+        <button @onclick="()=> Rating = i1">@c</button>
+    }
+</div>
+
+
+
+@code {
+
+
+    [Parameter] public EventCallback<int?> RatingChanged { get; set; }
+
+    private int? _rating;
+
+    [Parameter]
+    public int? Rating
+    {
+        get => _rating;
+        set
+        {
+            if (_rating == value)
+            {
+                if (_rating == null) return;
+
+                _rating = null;
+            }
+            else
+            {
+                _rating = value;    
+            }
+
+            RatingChanged.InvokeAsync(_rating);
+        }
+    }
+
+    [Parameter]
+    public int MaxRating { get; set; } = 5;
+
+}

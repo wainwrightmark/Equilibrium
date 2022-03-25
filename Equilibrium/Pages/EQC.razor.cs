@@ -1,6 +1,5 @@
-﻿using Excubo.Blazor.Canvas;
-using Excubo.Blazor.Canvas.Contexts;
-using Majorsoft.Blazor.Components.Common.JsInterop.Resize;
+﻿using Majorsoft.Blazor.Components.Common.JsInterop.Resize;
+using Majorsoft.Blazor.Extensions.BrowserStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -14,6 +13,8 @@ public partial class EQC
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
     [Inject] public IResizeHandler ResizeHandler { get; set; } = null!;
 
+    [Inject]
+    public ILocalStorageService LocalStorageService { get; set; } = null!;
 
     private ElementReference container;
     private Canvas _canvas = null!;

@@ -6,3 +6,4 @@
 - [ ] More shapes
 - [ ] Shapes have other properties?
 - [x] Colors in ShapeOptionComponents
+- [ ] Overlay UI on top of canvas

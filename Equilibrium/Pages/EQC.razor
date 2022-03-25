@@ -36,7 +36,11 @@
 <label>FPS: @TransientState.FramesPerSecond</label>
 <br/>
 <button @onclick="ChangeLevel">ChangeLevel</button>
-
+<br/>
+<label>Difficulty</label>
+<RatingComponent @bind-Rating="LevelDifficulty"/>
+<label>Fun</label>
+<RatingComponent @bind-Rating="LevelFun"/>
 
 @*<select @bind="LevelName">
     @foreach (var level in GameLevel.Levels)
@@ -47,11 +51,48 @@
 
 @code{
 
-    public void ChangeLevel()
+    public UserLevel UserLevel { get; set; } = new ("Basic", Level.Basic, false, null, null);
+
+    public async Task ChangeLevel()
     {
-        var level= Level.MakeRandomLevel(new Random());
+        var seed = new Random().Next();
+
+        var name = $"Level-{seed}";
+        var level= Level.MakeRandomLevel(new Random(seed));
+        UserLevel = new UserLevel(name, level, false,null, null);
+
+        
         GameState.ChangeLevel(level, TransientState);
+
+        await SaveLevel();
     }
+
+    private Task SaveLevel()
+    {
+        return Task.CompletedTask;
+        return LocalStorageService.SetItemAsync(UserLevel.Name, UserLevel);
+    }
+
+    public int? LevelDifficulty
+    {
+        get { return UserLevel.DifficultyStars; }
+        set
+        {
+            UserLevel = UserLevel with{DifficultyStars = value};
+            SaveLevel();
+        }
+    }
+    
+    public int? LevelFun
+    {
+        get { return UserLevel.FunStars; }
+        set
+        {
+            UserLevel = UserLevel with{FunStars = value};
+            SaveLevel();
+        }
+    }
+
 
     //public string LevelName
     //{

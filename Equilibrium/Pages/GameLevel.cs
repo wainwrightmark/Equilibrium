@@ -3,14 +3,19 @@
 namespace Equilibrium.Pages;
 
 
+public sealed record UserLevel(string Name, Level Level, bool IsBeaten, int? FunStars, int? DifficultyStars);
+
+
+public sealed record ShapeMetadata(string Shape, int Number);
+
 public sealed record Level(string InitialShape,
     int InitialShapeRotations,
-    IReadOnlyList<(string Shape, int Number)> Shapes)
+    IReadOnlyList<ShapeMetadata> Shapes)
 {
     public static readonly Level Basic =
 
         new (BoxGameShape.Instance.Name, 0,
-            GameShapeHelper.AllGameShapes.Select(x => (Shape: x.Name,Number: 1))
+            GameShapeHelper.AllGameShapes.Select(x => new ShapeMetadata(Shape: x.Name,Number: 1))
                 .ToList()
         );
 
@@ -18,13 +23,13 @@ public sealed record Level(string InitialShape,
     {
         var initialShape = RandomShape(random);
         var initialRotation =
-            initialShape.RotationFraction is null ? 0 : random.Next(initialShape.RotationFraction.Value);
+            initialShape.RotationFraction is null ? 0 : random.Next(initialShape.MaxRotations);
         var totalShapes = random.Next(4, 9);
 
         var shapes = Enumerable.Range(0, totalShapes)
             .Select(_ => RandomShape(random))
             .GroupBy(x => x.Name)
-            .Select(x => (x.Key, x.Count()))
+            .Select(x => new ShapeMetadata(x.Key, x.Count()))
             .ToList();
 
         return new Level(initialShape.Name, initialRotation, shapes);
@@ -53,10 +58,8 @@ public sealed record Level(string InitialShape,
 
         var lowestPosition = initialShape.GetLowestPosition(shapeScale, InitialShapeRotations);
 
-        var initialShapePosition = new Vector2(width / 2, lowestPosition.Y + height);
-        var initialRotation = initialShape.RotationInterval is null
-            ? 0
-            : initialShape.RotationInterval.Value * InitialShapeRotations;
+        var initialShapePosition = new Vector2(width / 2, height + lowestPosition.Y);
+        var initialRotation = initialShape.GetRotation(InitialShapeRotations);
 
 
         var body = initialShape.Create(world, initialShapePosition, initialRotation, shapeScale, BodyType.Static);

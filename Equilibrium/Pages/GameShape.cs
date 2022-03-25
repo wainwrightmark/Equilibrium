@@ -39,6 +39,9 @@ public abstract class GameShape
 {
     public abstract int? RotationFraction { get; }
 
+
+    public abstract int MaxRotations { get; }
+
     public float? RotationInterval =>
         (float)Math.Tau / RotationFraction;
 
@@ -74,6 +77,9 @@ public class CircleGameShape : GameShape
 
     /// <inheritdoc />
     public override int? RotationFraction => null;
+
+    /// <inheritdoc />
+    public override int MaxRotations => 0;
 
     /// <inheritdoc />
     public override Body Create(World world, Vector2 position, float rotation, float shapeScale, BodyType bodyType)
@@ -115,6 +121,8 @@ public class HemisphereGameShape : ComplexPolygonGameShape
     /// <inheritdoc />
     public override int? RotationFraction => 4;
 
+    /// <inheritdoc />
+    public override int MaxRotations => 4;
 
     /// <inheritdoc />
     protected override IEnumerable<Vertices> GetVertices(float scale)
@@ -140,6 +148,9 @@ public class BoxGameShape : ComplexPolygonGameShape
 
     /// <inheritdoc />
     public override int? RotationFraction => 8;
+
+    /// <inheritdoc />
+    public override int MaxRotations => 2;
 
     /// <inheritdoc />
     protected override IEnumerable<Vertices> GetVertices(float scale)
@@ -196,6 +207,9 @@ public class EllGameShape : ComplexPolygonGameShape
     /// <inheritdoc />
     public override int? RotationFraction => 4;
 
+    /// <inheritdoc />
+    public override int MaxRotations => 4;
+
 
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
@@ -222,6 +236,9 @@ public class LollipopGameShape : ComplexPolygonGameShape
     public override int? RotationFraction => 4;
 
     /// <inheritdoc />
+    public override int MaxRotations => 4;
+
+    /// <inheritdoc />
     public override string Name => "Lollipop";
 
     /// <inheritdoc />
@@ -245,6 +262,9 @@ public class TriangleGameShape : ComplexPolygonGameShape
 
     /// <inheritdoc />
     public override int? RotationFraction => 8;
+
+    /// <inheritdoc />
+    public override int MaxRotations => 8;
 
     /// <inheritdoc />
     public override string Name => "Triangle";
@@ -278,6 +298,9 @@ public class CrossGameShape : ComplexPolygonGameShape
 
     /// <inheritdoc />
     public override int? RotationFraction => 8;
+
+    /// <inheritdoc />
+    public override int MaxRotations => 2;
 
 
     protected override IEnumerable<Vertices> GetVertices(float scale)
