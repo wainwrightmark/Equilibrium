@@ -2,9 +2,6 @@
 
 public class TransientState
 {
-    public float CanvasWidth { get; set; } = 350;
-    public float CanvasHeight { get; set; } = 500;
-
     public (float X, float Y)? MousePosition { get; set; } = null;
 
     public float LastTimestamp { get; set; } = 0;
@@ -92,8 +89,8 @@ public class GameState
         Bodies.Clear();
         AddedShapes.Clear();
         Bodies.AddRange(Level.SetupWorld(World,
-            transientState.CanvasWidth / GameScale,
-            transientState.CanvasHeight / GameScale,
+            EQC.CanvasWidth / GameScale,
+            EQC.CanvasHeight / GameScale,
             Scale));
 
         transientState.RestartGame();
@@ -155,7 +152,16 @@ public class GameState
 
         var dt = transientState.Step(timeStamp);
 
-        World.Step(dt / 1000);
+        try
+        {
+            World.Step(dt / 1000);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return;
+        }
+        
 
         var shapeAdded = false;
         while (ShapesToAdd.TryPop(out var shapeToAdd))

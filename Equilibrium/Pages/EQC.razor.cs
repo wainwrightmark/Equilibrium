@@ -52,6 +52,7 @@ public partial class EQC
             $"let e = document.querySelector('[_bl_{container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e");
     }
 
+    private readonly object _drawing = new();
 
     /// <summary>
     /// This method will be called 60 times per second by the requestanimationframe from javascript.
@@ -63,9 +64,12 @@ public partial class EQC
     [JSInvokable]
     public async ValueTask GameLoop(float timeStamp, int width, int height)
     {
-        await using var batch = _canvasContext.CreateBatch();
-
-        await GameState.StepAndDraw(timeStamp, batch, width, height, TransientState);
+        if (Monitor.TryEnter(_drawing))
+        {
+            await using var batch = _canvasContext.CreateBatch();
+            await GameState.StepAndDraw(timeStamp, batch, width, height, TransientState);
+            Monitor.Exit(_drawing);
+        }
     }
 
 

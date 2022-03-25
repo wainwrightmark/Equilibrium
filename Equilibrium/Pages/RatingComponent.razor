@@ -5,7 +5,7 @@
         var i1 = i;
         var c = i <= Rating ? '★' : '☆';
     
-        <button @onclick="()=> Rating = i1">@c</button>
+        <button class="rating-button" @onclick="()=> Rating = i1">@c</button>
     }
 </div>
 
@@ -26,14 +26,9 @@
         {
             if (_rating == value)
             {
-                if (_rating == null) return;
-
-                _rating = null;
+                return;
             }
-            else
-            {
-                _rating = value;    
-            }
+            _rating = value;
 
             RatingChanged.InvokeAsync(_rating);
         }

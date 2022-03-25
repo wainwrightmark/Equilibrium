@@ -1,22 +1,23 @@
 ﻿@using Excubo.Blazor.Canvas.Contexts
 @using tainicom.Aether.Physics2D.Common
 
-<button @onclick="OnClick" style="width:@Width; height: @Height; z-index: -1;">
+<button @onclick="OnClick" style="position: relative;">
     <Canvas
         @ref="_canvas"
-        style="position: relative;"
         Width="@Width"
         Height="@Height">
     </Canvas>
-    @Count
+    <div style="position: absolute; bottom: 20px; right: 20px;">
+        @Count
+    </div>
+    
 </button>
-
 
 
 @code {
 
     private Canvas _canvas = null!;
-    private Context2D _canvasContext = null!;
+    private Context2D? _canvasContext = null!;
 
     [Parameter]
     public GameShape GameShape { get; set; } = null!;
@@ -72,21 +73,24 @@
             fillColor = GameShape.Color;
         }
 
-        await using var batch = _canvasContext.CreateBatch();
-
-        await batch.ClearRectAsync(0, 0, Width, Height);
-
-        await batch.LineWidthAsync(lineWidth);
-
-        await batch.FillStyleAsync(fillColor);
-        await batch.StrokeStyleAsync(strokeColor);
-
-        var rotation = ThisAsChosenShape.Rotation;
-        foreach (var shape in GameShape.GetShapes(60))
+        if (_canvasContext is not null)
         {
-            await batch.DrawShapeAsync(
-                shape,
-                new Transform(new Vector2(Width / 2, Height / 2), rotation));
+            await using var batch = _canvasContext.CreateBatch();
+
+            await batch.ClearRectAsync(0, 0, Width, Height);
+
+            await batch.LineWidthAsync(lineWidth);
+
+            await batch.FillStyleAsync(fillColor);
+            await batch.StrokeStyleAsync(strokeColor);
+
+            var rotation = ThisAsChosenShape.Rotation;
+            foreach (var shape in GameShape.GetShapes(60))
+            {
+                await batch.DrawShapeAsync(
+                    shape,
+                    new Transform(new Vector2(Width / 2, Height / 2), rotation));
+            }
         }
     }
 
