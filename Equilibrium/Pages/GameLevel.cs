@@ -2,10 +2,6 @@
 
 namespace Equilibrium.Pages;
 
-
-public sealed record UserLevel(string Name, Level Level, bool IsBeaten, int? FunStars, int? DifficultyStars);
-
-
 public sealed record ShapeMetadata(string Shape, int Number);
 
 public sealed record Level(string InitialShape,

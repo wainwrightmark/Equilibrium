@@ -8,33 +8,43 @@ using DotNetObjectReference = Microsoft.JSInterop.DotNetObjectReference;
 
 namespace Equilibrium.Pages;
 
-public partial class EQC
+public partial class EquilibriumComponent
 {
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
     [Inject] public IResizeHandler ResizeHandler { get; set; } = null!;
 
-    [Inject]
-    public ILocalStorageService LocalStorageService { get; set; } = null!;
+    [Inject] public ILocalStorageService LocalStorageService { get; set; } = null!;
 
-    private ElementReference container;
+    private ElementReference _container;
     private Canvas _canvas = null!;
     private Context2D _canvasContext = null!;
 
     private TransientState TransientState { get; } = new();
 
-    private GameState GameState { get; set; } = new (Level.Basic);
+    private GameState GameState { get; set; } = new(Level.Basic);
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            var keys = await LocalStorageService.GetAllKeysAsync().ToListAsync();
+
+
+
+            var levels = await Task.WhenAll(keys.Where(x=>x.StartsWith("Level"))
+                .Select(k => LocalStorageService.GetItemAsync<UserLevel>(k)));
+
+            SavedLevels = levels.Prepend(BasicLevel).ToList();
+
+
+
             _canvasContext = await _canvas.GetContext2DAsync();
 
             await OnResize();
-            await ResizeHandler.RegisterPageResizeAsync(_ => OnResize());
+            await ResizeHandler.RegisterPageResizeAsync(_ => OnResize()); //TODO use this to track height
             GameState.Restart(TransientState);
-            GameState.StateChanged+= delegate { StateHasChanged(); };
+            GameState.StateChanged += delegate { StateHasChanged(); };
 
             await JsRuntime.InvokeAsync<object>("initGame",
                 new[] { DotNetObjectReference.Create(this) as object });
@@ -49,7 +59,7 @@ public partial class EQC
     {
         _canvasPosition = await JsRuntime.InvokeAsync<CanvasPosition>(
             "eval",
-            $"let e = document.querySelector('[_bl_{container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e");
+            $"let e = document.querySelector('[_bl_{_container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e");
     }
 
     private readonly object _drawing = new();
@@ -69,6 +79,12 @@ public partial class EQC
             await using var batch = _canvasContext.CreateBatch();
             await GameState.StepAndDraw(timeStamp, batch, width, height, TransientState);
             Monitor.Exit(_drawing);
+
+            if (GameState.IsWin == true && !UserLevel.IsBeaten)
+            {
+                UserLevel = UserLevel with{IsBeaten = true};
+                await SaveLevel();
+            }
         }
     }
 

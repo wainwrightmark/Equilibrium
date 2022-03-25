@@ -89,8 +89,8 @@ public class GameState
         Bodies.Clear();
         AddedShapes.Clear();
         Bodies.AddRange(Level.SetupWorld(World,
-            EQC.CanvasWidth / GameScale,
-            EQC.CanvasHeight / GameScale,
+            EquilibriumComponent.CanvasWidth / GameScale,
+            EquilibriumComponent.CanvasHeight / GameScale,
             Scale));
 
         transientState.RestartGame();

@@ -1,9 +1,9 @@
 ﻿@using tainicom.Aether.Physics2D.Dynamics
 @using tainicom.Aether.Physics2D.Common
 
-<div style="width: 100%">
+<div style="width: 100%; height: 100%;">
     <div id="canvasContainer"
-         @ref="container"
+         @ref="_container"
          style="margin-left: auto; margin-right: auto; width: @(CanvasWidth + "px"); height: @(CanvasHeight + "px"); position: relative; border: 1px solid black;">
         <Canvas @onmousemove="MouseMoveCanvas"
                 @onmouseup="MouseUpCanvas"
@@ -20,8 +20,15 @@
                 Height="@CanvasHeight">
         </Canvas>
 
-        <div style="position: absolute; top: 50px; left: 50px;">
-
+        <div style="position: absolute; top: 25px; left: 50px;">
+            
+            <select @bind="LevelName">
+                @foreach (var level in SavedLevels)
+                {
+                    <option value="@level.Name">@level.GetDisplayString()</option>
+                }
+            </select>
+            <br/>
             <label>FPS: @TransientState.FramesPerSecond</label>
             <br/>
             <button @onclick="() => GameState.Restart(TransientState)">Restart</button>
@@ -41,37 +48,55 @@
                 <label>Fun</label>
                 <RatingComponent @bind-Rating="LevelFun"/>
                 <br/>
-                <button @onclick="ChangeLevel">ChangeLevel</button>
+                
+
+                <button @onclick="RandomLevel">Random Level</button>
             }
         </div>
 
 
     </div>
-</div>
 
 
-<div style="width: @(CanvasWidth + "px"); height: 135px; overflow-y: hidden; overflow-x: auto; margin-left: auto; margin-right: auto;">
-    <menu style="display: flex; list-style: none; padding: 0; margin-top: 5px;">
-        @foreach (var shape in GameState.RemainingShapes())
-        {
-            <div style="margin: 0; padding: 0;">
-                <ShapeOptionComponent GameShape="shape.shape" Count="@shape.count" TransientState="TransientState"/>
-            </div>
-        }
-    </menu>
+    <div style="width: @(CanvasWidth + "px"); height: 135px; overflow-y: hidden; overflow-x: auto; margin-left: auto; margin-right: auto;">
+        <menu style="display: flex; list-style: none; padding: 0; margin-top: 5px;">
+            @foreach (var shape in GameState.RemainingShapes())
+            {
+                <div style="margin: 0; padding: 0;">
+                    <ShapeOptionComponent GameShape="shape.shape" Count="@shape.count" TransientState="TransientState"/>
+                </div>
+            }
+        </menu>
 
+    </div>
 </div>
 
 
 @code{
+        
+    public const float CanvasWidth = 350;
+    public const float CanvasHeight = 500;
 
-        public const float CanvasWidth = 350;
-        public const float CanvasHeight = 500;
+    public string LevelName
+    {
+        get => UserLevel.Name;
+        set
+        {
+            if (value == LevelName) return;
 
+            var level = SavedLevels.First(x => x.Name == value);
+            UserLevel = level;
+            GameState.ChangeLevel(UserLevel.Level, TransientState);
+        }
+    }
 
-    public UserLevel UserLevel { get; set; } = new("Basic", Level.Basic, false, null, null);
+    private static readonly UserLevel BasicLevel = new("Basic", Level.Basic, false, null, null);
 
-    public async Task ChangeLevel()
+    public List<UserLevel> SavedLevels { get; set; } = new() {BasicLevel };
+
+    public UserLevel UserLevel { get; set; } = BasicLevel;
+
+    public async Task RandomLevel()
     {
         var seed = new Random().Next();
 
@@ -79,15 +104,15 @@
         var level = Level.MakeRandomLevel(new Random(seed));
         UserLevel = new UserLevel(name, level, false, null, null);
 
-
         GameState.ChangeLevel(level, TransientState);
-
-    //await SaveLevel();
     }
 
-    private Task SaveLevel()
+    private async Task SaveLevel()
     {
-        return LocalStorageService.SetItemAsync(UserLevel.Name, UserLevel);
+        await LocalStorageService.SetItemAsync(UserLevel.Name, UserLevel);
+
+        SavedLevels.RemoveAll(x => x.Name == UserLevel.Name);
+        SavedLevels.Add(UserLevel);
     }
 
     public int? LevelDifficulty
