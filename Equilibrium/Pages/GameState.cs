@@ -84,10 +84,18 @@ public class GameState
 
             var body = Bodies[drag.BodyIndex];
 
-            var rotation = drag.Next.Rotation - body.Body.Rotation;
+            static float GetRotationDifference(float r1, float r2)
+            {
+                var diff = r1 - r2;
+                while (diff > Math.PI) diff -= (float) Math.Tau;
+                while (diff < -Math.PI) diff += (float)Math.Tau;
+                return diff;
+            }
+
+            var rotation = (GetRotationDifference(drag.Next.Rotation, body.Body.Rotation) * dt) - body.Body.AngularVelocity;
             var vector = drag.Next.Position - body.Body.Position;
             var accVector = (vector * dt) - body.Body.LinearVelocity;
-            var adjustedRotation = Math.Clamp(rotation * dt, -OneRotation * 10, OneRotation * 10);
+            var adjustedRotation = Math.Clamp(rotation, -OneRotation * 10, OneRotation * 10);
             const float maxAcc = 1;
             
             if (accVector.LengthSquared() > maxAcc)
@@ -96,11 +104,8 @@ public class GameState
                 accVector  *= maxAcc;
             }
             
-            var newSpeedVector = body.Body.LinearVelocity + accVector;
-            
-
-            body.Body.LinearVelocity = newSpeedVector;
-            body.Body.AngularVelocity = adjustedRotation;
+            body.Body.LinearVelocity += accVector;
+            body.Body.AngularVelocity += adjustedRotation;
         }
 
         try
@@ -305,22 +310,24 @@ public class GameState
 
         if (drag is null)
         {
-            if (identifier is TouchDragIdentifier tdi)
+            if (identifier is TouchDragIdentifier tdi) //Touch rotation
             {
                 var rotDrag = transientState.Drags.FirstOrDefault(d => d.Rotation?.RotationIdentifier == tdi);
                 if (rotDrag != null)
                 {
                     var rotation = rotDrag.Rotation!;
-                    var ab = rotation.CentrePosition - rotation.StartPosition;
-                    var bc = rotation.CentrePosition - v;
+                    var P1 = rotation.CentrePosition;
+                    var P2 = rotation.StartPosition;
+                    var P3 = v;
 
+                    var angle  = Math.Atan2(P3.Y - P1.Y, P3.X - P1.X) -
+                                 Math.Atan2(P2.Y - P1.Y, P2.X - P1.X);
 
-                    var dotProduct = ab.X * bc.X + ab.Y * bc.Y;
-                    var magProduct = ab.Length() * bc.Length();
+                    var fullAngle = rotation.StartRotation + angle;
 
-                    var angle = Math.Acos(dotProduct / magProduct);
-                    var fullAngle = rotDrag.Next.Rotation + angle;
-                    rotDrag.SetNext(rotDrag.Next.Position, (float) fullAngle);
+                    Console.WriteLine($"FullAngle: {fullAngle.ToString("F2")} Rotation: {angle.ToString("F2")}");
+
+                    rotDrag.SetNext(rotDrag.Next.Position, (float)fullAngle);
 
                 }
             }

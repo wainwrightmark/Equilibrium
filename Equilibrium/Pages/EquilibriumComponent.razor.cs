@@ -48,7 +48,7 @@ public partial class EquilibriumComponent
                 new[] { DotNetObjectReference.Create(this) as object });
 
 
-            //GameState.DragFirstBody(TransientState);
+            GameState.DragFirstBody(TransientState);
         }
     }
 
