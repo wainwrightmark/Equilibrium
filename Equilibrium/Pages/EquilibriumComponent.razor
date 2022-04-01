@@ -12,7 +12,12 @@
             @onmouseout="OnMouseOut"
             @onmouseup="OnMouseUp"
             @onmousewheel="OnMouseWheel"
-           @onkeypress="OnKeyPress"
+            
+            @ontouchstart="OnTouchStart"
+            @ontouchmove="OnTouchMove"
+            @ontouchend="OnTouchEnd"
+            @ontouchcancel="OnTouchCancel"
+            @onkeypress="OnKeyPress"
 
                 @ref="_canvas"
                 Width="@CanvasWidth"

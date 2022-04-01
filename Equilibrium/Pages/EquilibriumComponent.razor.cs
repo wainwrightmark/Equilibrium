@@ -1,4 +1,5 @@
-﻿using Majorsoft.Blazor.Components.Common.JsInterop.Resize;
+﻿using Excubo.Generators.Blazor.ExperimentalDoNotUseYet;
+using Majorsoft.Blazor.Components.Common.JsInterop.Resize;
 using Majorsoft.Blazor.Extensions.BrowserStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -30,13 +31,10 @@ public partial class EquilibriumComponent
         {
             var keys = await LocalStorageService.GetAllKeysAsync().ToListAsync();
 
-
-
             var levels = await Task.WhenAll(keys.Where(x => x.StartsWith("Level"))
                 .Select(k => LocalStorageService.GetItemAsync<UserLevel>(k)));
 
             SavedLevels = levels.Prepend(BasicLevel).ToList();
-
 
 
             _canvasContext = await _canvas.GetContext2DAsync();
@@ -48,6 +46,9 @@ public partial class EquilibriumComponent
 
             await JsRuntime.InvokeAsync<object>("initGame",
                 new[] { DotNetObjectReference.Create(this) as object });
+
+
+            //GameState.DragFirstBody(TransientState);
         }
     }
 
@@ -89,24 +90,71 @@ public partial class EquilibriumComponent
     }
 
     private void OnMouseDown(MouseEventArgs e)
-    {var x = e.ClientX - _canvasPosition.Left;
-        var y = e.ClientY - _canvasPosition.Top;
-
-        GameState.MaybeStartDrag((float)x, (float)y, TransientState);
-
-    }private void OnMouseMove(MouseEventArgs e)
     {
         var x = e.ClientX - _canvasPosition.Left;
         var y = e.ClientY - _canvasPosition.Top;
 
-        GameState.OnDragMove((float)x, (float)y, TransientState);
+        GameState.MaybeStartDrag(MouseDragIdentifier.Instance, (float)x, (float)y, TransientState);
 
-    }private void OnMouseOut(MouseEventArgs e)
+    }
+    
+    private void OnTouchStart(TouchEventArgs e)
     {
-        GameState.EndDrag(TransientState);
-    }private void OnMouseUp(MouseEventArgs e)
+        foreach (var touchPoint in e.ChangedTouches)
+        {
+            var x = touchPoint.ClientX - _canvasPosition.Left;
+            var y = touchPoint.ClientY - _canvasPosition.Top;
+
+            GameState.MaybeStartDrag(new TouchDragIdentifier(touchPoint.Identifier), (float)x, (float)y, TransientState);
+        }
+    }
+
+    private void OnTouchMove(TouchEventArgs e)
     {
-        GameState.EndDrag(TransientState);
+        foreach (var touchPoint in e.ChangedTouches)
+        {
+            var x = touchPoint.ClientX - _canvasPosition.Left;
+            var y = touchPoint.ClientY - _canvasPosition.Top;
+
+            GameState.OnDragMove(new TouchDragIdentifier(touchPoint.Identifier),
+                (float)x, (float)y, TransientState);
+        }
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        var x = e.ClientX - _canvasPosition.Left;
+        var y = e.ClientY - _canvasPosition.Top;
+
+        GameState.OnDragMove(MouseDragIdentifier.Instance,(float)x, (float)y, TransientState);
+
+    }
+    
+    private void OnMouseOut(MouseEventArgs e)
+    {
+        GameState.EndDrag(MouseDragIdentifier.Instance,TransientState);
+    }
+
+    private void OnTouchEnd(TouchEventArgs e)
+    {
+        foreach (var touchPoint in e.ChangedTouches)
+        {
+            GameState.EndDrag(new TouchDragIdentifier(touchPoint.Identifier), TransientState);   
+        }
+    }
+
+    private void OnTouchCancel(TouchEventArgs e)
+    {
+        foreach (var touchPoint in e.ChangedTouches)
+        {
+            GameState.EndDrag(new TouchDragIdentifier(touchPoint.Identifier), TransientState);   
+        }
+    }
+    
+    
+    private void OnMouseUp(MouseEventArgs e)
+    {
+        GameState.EndDrag(MouseDragIdentifier.Instance,TransientState);
     }
 
     private void OnMouseWheel(WheelEventArgs obj)
@@ -176,11 +224,7 @@ public partial class EquilibriumComponent
     //        TransientState.DragPosition = new((float)x, (float)y);
     //    }
     //}
-
-    //private void MouseOutCanvas(MouseEventArgs e)
-    //{
-    //    TransientState.DragPosition = null;
-    //}
+    
 
     //private void TouchLeaveCanvas(TouchEventArgs e)
     //{

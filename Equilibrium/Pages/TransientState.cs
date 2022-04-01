@@ -2,13 +2,14 @@
 
 public class TransientState
 {
-    public Drag? Drag { get; set; } = null; //TODO use an id or something here
+
+    public List<Drag> Drags { get; set; } = new();
 
     public float LastTimestamp { get; set; } = 0;
 
     public int FramesPerSecond { get; set; } = 0;
 
-    public bool DragJustEnded  {get; set;} = false;
+    public bool ShouldCheckForWin  {get; set;} = false;
 
     public float Step(float newTimestamp)
     {
@@ -21,7 +22,8 @@ public class TransientState
 
     public void RestartGame()
     {
-        Drag = null;
-        //ChosenShape = null;
+        Drags.Clear();
     }
 }
+
+

@@ -48,9 +48,9 @@ public class GameState
             Victory();
         }
 
-        if (ts.DragJustEnded)
+        if (ts.ShouldCheckForWin)
         {
-            ts.DragJustEnded = false;
+            ts.ShouldCheckForWin = false;
             if (!IsWin && WinTime is null) WinTime = timeStamp + TimerMs;
         }
 
@@ -77,25 +77,29 @@ public class GameState
 
         var dt = ts.Step(timeStamp);
 
-        if (ts.Drag is not null)
+
+        foreach (var drag in ts.Drags)
         {
             WinTime = null;
 
-            var body = Bodies[ts.Drag.BodyIndex];
+            var body = Bodies[drag.BodyIndex];
 
-            var rotation = ts.Drag.Next.Rotation - body.Body.Rotation;
-            var vector = ts.Drag.Next.Position - body.Body.Position;
-            var adjustedVector = vector * dt;
+            var rotation = drag.Next.Rotation - body.Body.Rotation;
+            var vector = drag.Next.Position - body.Body.Position;
+            var accVector = (vector * dt) - body.Body.LinearVelocity;
             var adjustedRotation = Math.Clamp(rotation * dt, -OneRotation * 10, OneRotation * 10);
-            const float maxVel = 5;
-
-            if (adjustedVector.LengthSquared() > maxVel)
+            const float maxAcc = 1;
+            
+            if (accVector.LengthSquared() > maxAcc)
             {
-                adjustedVector.Normalize();
-                adjustedVector *= maxVel;
+                accVector.Normalize();
+                accVector  *= maxAcc;
             }
+            
+            var newSpeedVector = body.Body.LinearVelocity + accVector;
+            
 
-            body.Body.LinearVelocity = adjustedVector;
+            body.Body.LinearVelocity = newSpeedVector;
             body.Body.AngularVelocity = adjustedRotation;
         }
 
@@ -108,11 +112,7 @@ public class GameState
             Console.WriteLine(e);
             return;
         }
-
-        var minPosition = ScaleConstants.ScaleVector(Vector2.Zero);
-        var maxPosition =
-            ScaleConstants.ScaleVector(EquilibriumComponent.CanvasWidth, EquilibriumComponent.CanvasHeight);
-
+        
         foreach (var body in Bodies)
         {
             //Stop win timer if an object hits the wall
@@ -132,20 +132,34 @@ public class GameState
                 }
             }
 
-            //Make sure no body can leave the world
-            if (body.Body.Position.X < minPosition.X) body.Body.Position = body.Body.Position with { X = minPosition.X };
-            if (body.Body.Position.Y < minPosition.Y) body.Body.Position = body.Body.Position with { Y = minPosition.Y };
-            
-            if (body.Body.Position.X > maxPosition.X) body.Body.Position = body.Body.Position with { X = maxPosition.X };
-            if (body.Body.Position.Y > maxPosition.Y) body.Body.Position = body.Body.Position with { Y = maxPosition.Y };
-            
-
             if (body.Shape is not null)
             {
                 await batch.DrawBodyAsync(body);
             }
         }
 
+
+        foreach (var touchDrag in ts.Drags.Where(x=>x.DragIdentifier is TouchDragIdentifier))
+        {
+            var body = Bodies[touchDrag.BodyIndex];
+
+            if (body.Shape is not null)
+            {
+                await batch.StrokeStyleAsync(body.Shape.Color);
+                await batch.BeginPathAsync();
+
+                await batch.MoveToAsync(body.Body.Position.X,0);
+                await batch.LineToAsync(body.Body.Position.X, EquilibriumComponent.CanvasHeight );
+
+                await batch.MoveToAsync(0, body.Body.Position.Y);
+                await batch.LineToAsync(EquilibriumComponent.CanvasWidth, body.Body.Position.Y);
+
+                await batch.StrokeAsync();
+                
+            }
+        }
+
+        
 #pragma warning disable CS0618
         await batch.ResetTransformAsync();
 #pragma warning restore CS0618
@@ -183,11 +197,13 @@ public class GameState
             var shape = GameShapeHelper.GetShapeByName(shapeMetadata.Shape);
             for (var i = 0; i < shapeMetadata.Number; i++)
             {
-                var x = random.NextSingle() * EquilibriumComponent.CanvasWidth;
-                var y = random.NextSingle() * EquilibriumComponent.CanvasHeight;
+                var x = random.NextSingle() * EquilibriumComponent.CanvasWidth / 2;
+                var y = random.NextSingle() * EquilibriumComponent.CanvasHeight / 2;
                 var newBody = shape.Create(World,
-                    ScaleConstants.ScaleVector(x, y),
+                    ScaleConstants.ScaleVector(x + EquilibriumComponent.CanvasWidth / 4 , y + EquilibriumComponent.CanvasHeight / 4),
                     0, Scale, BodyType.Dynamic);
+
+                newBody.LinearVelocity = ScaleConstants.ScaleVector(new Vector2(0, -10 *random.NextSingle() * ShapeScale));
 
                 newBody.Tag = "Dynamic " + shape.Name;
                 //newBody.IsBullet = true;
@@ -211,66 +227,122 @@ public class GameState
         }
     }
 
-    
+    public void DragFirstBody(TransientState transientState) //Method for testing touch
+    {
+        var index = Bodies.FindIndex(x => x.Type == ShapeBodyType.Dynamic);
+        var body = Bodies[index];
+        body.Body.AngularVelocity = 0;
+        var drag = new Drag(new TouchDragIdentifier(12345), body, index, Vector2.Zero);
+        transientState.Drags.Add(drag);
+    }
 
-    public void MaybeStartDrag(float x, float y, TransientState transientState)
+    public void MaybeStartDrag(DragIdentifier identifier, float x, float y, TransientState transientState)
     {
         var worldVector = ScaleConstants.ScaleVector(x, y);
         var fixture = World.TestPoint(worldVector);
 
-        if (fixture is null) return;
-
-        var bodyIndex = Bodies.FindIndex(shapeBody => shapeBody.Body.FixtureList.Contains(fixture));
-
-        if(bodyIndex < 0)return;
-        
-        var body = Bodies[bodyIndex];
-
-        if (body.Type == ShapeBodyType.Dynamic)
+        if (fixture is not null)
         {
-            //body.Body.IsBullet = false;
-            body.Body.AngularVelocity = 0;
-            transientState.Drag = new Drag(body, bodyIndex, body.Body.Position - worldVector);
+            var bodyIndex = Bodies.FindIndex(shapeBody => shapeBody.Body.FixtureList.Contains(fixture));
+
+            if(bodyIndex < 0)return;
+        
+            var body = Bodies[bodyIndex];
+
+            if (body.Type == ShapeBodyType.Dynamic)
+            {
+                //body.Body.IsBullet = false;
+                body.Body.AngularVelocity = 0;
+                var drag = new Drag(identifier, body, bodyIndex, body.Body.Position - worldVector);
+                transientState.Drags.Add(drag);
+            }
+
         }
+        else if(identifier is TouchDragIdentifier dfi)
+        {
+            var dragToRotate = transientState.Drags
+                .FirstOrDefault(d => d.DragIdentifier is TouchDragIdentifier && d.Rotation is null);
+
+            if(dragToRotate != null)
+                dragToRotate.Rotation =
+                new DragRotation(dfi, dragToRotate.Next.Position, worldVector, dragToRotate.Next.Rotation);
+        }
+
+        
     }
 
     
-    public void EndDrag(TransientState transientState)
+    public void EndDrag(DragIdentifier identifier, TransientState transientState)
     {
-        if (transientState.Drag is not null)
+        var drag = transientState.Drags.FirstOrDefault(d => d.DragIdentifier == identifier);
+        if (drag is null)
         {
-            var body = Bodies[transientState.Drag.BodyIndex];
+            if (identifier is TouchDragIdentifier tdi)
+            {
+                var rotDrag = transientState.Drags.FirstOrDefault(d => d.Rotation?.RotationIdentifier == tdi);
+                if (rotDrag != null)
+                    rotDrag.Rotation = null;
+            }
 
-            //Do this to reset contacts
-            World.Remove(body.Body);
-            World.Add(body.Body);
 
-
-            transientState.Drag = null;
-            transientState.DragJustEnded = true;
+            return;
         }
+
+        var body = Bodies[drag.BodyIndex];
+
+        //Do this to reset contacts
+        World.Remove(body.Body);
+        World.Add(body.Body);
+
+        transientState.Drags.Remove(drag);
+        transientState.ShouldCheckForWin = true;
     }
 
-    public void OnDragMove(float x, float y, TransientState transientState)
+    public void OnDragMove(DragIdentifier identifier, float x, float y, TransientState transientState)
     {
-        if (transientState.Drag is not null)
+        var drag = transientState.Drags.FirstOrDefault(d => d.DragIdentifier == identifier);
+        var v = ScaleConstants.ScaleVector(x, y);
+
+        if (drag is null)
         {
-            var v = ScaleConstants.ScaleVector(x, y);
-            transientState.Drag.SetNext(v + transientState.Drag.WorldCanvasOffset, transientState.Drag.Next.Rotation);
+            if (identifier is TouchDragIdentifier tdi)
+            {
+                var rotDrag = transientState.Drags.FirstOrDefault(d => d.Rotation?.RotationIdentifier == tdi);
+                if (rotDrag != null)
+                {
+                    var rotation = rotDrag.Rotation!;
+                    var ab = rotation.CentrePosition - rotation.StartPosition;
+                    var bc = rotation.CentrePosition - v;
+
+
+                    var dotProduct = ab.X * bc.X + ab.Y * bc.Y;
+                    var magProduct = ab.Length() * bc.Length();
+
+                    var angle = Math.Acos(dotProduct / magProduct);
+                    var fullAngle = rotDrag.Next.Rotation + angle;
+                    rotDrag.SetNext(rotDrag.Next.Position, (float) fullAngle);
+
+                }
+            }
+            
+            return;
         }
+
+        drag.SetNext(v + drag.WorldCanvasOffset, drag.Next.Rotation);
     }
 
     const float OneRotation = (float) Math.Tau /  16;
 
     public void RotateDragged(int rotations, TransientState transientState)
     {
-        if (transientState.Drag is not null)
+        foreach (var drag in transientState.Drags)
         {
-            var currentRotations = Math.Round(transientState.Drag.Next.Rotation / OneRotation);
+            var currentRotations = Math.Round(drag.Next.Rotation / OneRotation);
             var newAngle = (currentRotations + rotations) * OneRotation;
 
-            transientState.Drag.SetNext(transientState.Drag.Next.Position, (float)newAngle);
+            drag.SetNext(drag.Next.Position, (float)newAngle);
         }
+        
     }
 
     public string? Message

@@ -20,12 +20,13 @@ public static class GameShapeHelper
 
         = new List<GameShape>()
         {
-            CircleGameShape.Instance,
+            TriangleGameShape.Instance,
             //HemisphereGameShape.Instance,
             BoxGameShape.Instance,
+            CircleGameShape.Instance,
             EllGameShape.Instance,
             //LollipopGameShape.Instance,
-            TriangleGameShape.Instance,
+            
             CrossGameShape.Instance
         };
 

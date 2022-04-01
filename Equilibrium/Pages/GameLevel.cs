@@ -65,7 +65,7 @@ public sealed record Level(string InitialShape,
 
         var lowestPosition = initialShape.GetLowestPosition(shapeScale, InitialShapeRotations);
 
-        var initialShapePosition = new Vector2(width / 2, height + lowestPosition.Y);
+        var initialShapePosition = new Vector2(width / 2, height + lowestPosition.Y - shapeScale);
         var initialRotation = initialShape.GetRotation(InitialShapeRotations);
 
 

@@ -1,4 +1,3 @@
-- [ ] Fix weird disappearing bug
 - [ ] Improve touch support
 - [x] Let users save and star levels
 - [ ] Come up with level naming system
@@ -20,4 +19,4 @@
 - [x] Reset rotation velocity on start drag
 - [ ] Touch Support
 - [x] Keyboard Support
-- [ ] Prevent objects leaving the level
+- [x] Prevent objects leaving the level
