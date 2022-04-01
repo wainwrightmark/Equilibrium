@@ -2,7 +2,7 @@
 
 public static class DrawHelpers
 {
-    public static async Task DrawBodyAsync(this Batch2D context, ShapeBody shapeBody)
+    public static async Task DrawBodyAsync(this Batch2D context, ShapeBody shapeBody, string opacityString)
     {
         if(shapeBody.Shape is null)return;
         
@@ -11,7 +11,8 @@ public static class DrawHelpers
             color = Colors.Grey;
         else color = shapeBody.Shape.Color;
 
-        await context.FillStyleAsync(color);
+        await context.FillStyleAsync(color + opacityString);
+        
 
         var transform = shapeBody.Body.GetTransform();
 

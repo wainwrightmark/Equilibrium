@@ -139,11 +139,11 @@ public class GameState
 
             if (body.Shape is not null)
             {
-                await batch.DrawBodyAsync(body);
+                await batch.DrawBodyAsync(body, "A0");
             }
         }
 
-
+        //Draw Touch Drag Crosshairs
         foreach (var touchDrag in ts.Drags.Where(x=>x.DragIdentifier is TouchDragIdentifier))
         {
             var body = Bodies[touchDrag.BodyIndex];
@@ -160,7 +160,28 @@ public class GameState
                 await batch.LineToAsync(EquilibriumComponent.CanvasWidth, body.Body.Position.Y);
 
                 await batch.StrokeAsync();
+
                 
+                await batch.SetTransformAsync(
+                    ScaleConstants.XScale * 2,
+                    0,
+                    0,
+                    ScaleConstants.YScale * 2,
+                    (ScaleConstants.XOffset  * 2) - body.Body.Position.X * ScaleConstants.XScale,
+                    (ScaleConstants.YOffset  * 2) - body.Body.Position.Y * ScaleConstants.YScale
+                );
+
+
+                await batch.DrawBodyAsync(body, "80");
+
+                await batch.SetTransformAsync(
+                    ScaleConstants.XScale,
+                    0,
+                    0,
+                    ScaleConstants.YScale,
+                    ScaleConstants.XOffset,
+                    ScaleConstants.YOffset
+                );
             }
         }
 
@@ -169,7 +190,7 @@ public class GameState
         await batch.ResetTransformAsync();
 #pragma warning restore CS0618
 
-
+        //Draw Win Progress Bar
         if (WinTime is not null)
         {
             await batch.FillStyleAsync("grey");
@@ -316,16 +337,13 @@ public class GameState
                 if (rotDrag != null)
                 {
                     var rotation = rotDrag.Rotation!;
-                    var P1 = rotation.CentrePosition;
-                    var P2 = rotation.StartPosition;
-                    var P3 = v;
-
-                    var angle  = Math.Atan2(P3.Y - P1.Y, P3.X - P1.X) -
-                                 Math.Atan2(P2.Y - P1.Y, P2.X - P1.X);
+                    
+                    var angle  = Math.Atan2(v.Y - rotation.CentrePosition.Y, v.X - rotation.CentrePosition.X) -
+                                 Math.Atan2(rotation.StartPosition.Y - rotation.CentrePosition.Y, rotation.StartPosition.X - rotation.CentrePosition.X);
 
                     var fullAngle = rotation.StartRotation + angle;
 
-                    Console.WriteLine($"FullAngle: {fullAngle.ToString("F2")} Rotation: {angle.ToString("F2")}");
+                    //Console.WriteLine($"FullAngle: {fullAngle.ToString("F2")} Rotation: {angle.ToString("F2")}");
 
                     rotDrag.SetNext(rotDrag.Next.Position, (float)fullAngle);
 
