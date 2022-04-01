@@ -32,7 +32,7 @@ public partial class EquilibriumComponent
 
 
 
-            var levels = await Task.WhenAll(keys.Where(x=>x.StartsWith("Level"))
+            var levels = await Task.WhenAll(keys.Where(x => x.StartsWith("Level"))
                 .Select(k => LocalStorageService.GetItemAsync<UserLevel>(k)));
 
             SavedLevels = levels.Prepend(BasicLevel).ToList();
@@ -43,7 +43,7 @@ public partial class EquilibriumComponent
 
             await OnResize();
             await ResizeHandler.RegisterPageResizeAsync(_ => OnResize()); //TODO use this to track height
-            GameState.Restart(TransientState);
+            GameState.Restart(TransientState, new Random());
             GameState.StateChanged += delegate { StateHasChanged(); };
 
             await JsRuntime.InvokeAsync<object>("initGame",
@@ -80,71 +80,110 @@ public partial class EquilibriumComponent
             await GameState.StepAndDraw(timeStamp, batch, width, height, TransientState);
             Monitor.Exit(_drawing);
 
-            if (GameState.IsWin == true && !UserLevel.IsBeaten)
+            if (GameState.IsWin && !UserLevel.IsBeaten)
             {
-                UserLevel = UserLevel with{IsBeaten = true};
+                UserLevel = UserLevel with { IsBeaten = true };
                 await SaveLevel();
             }
         }
     }
 
+    private void OnMouseDown(MouseEventArgs e)
+    {var x = e.ClientX - _canvasPosition.Left;
+        var y = e.ClientY - _canvasPosition.Top;
 
-    private void MouseDownCanvas(MouseEventArgs e)
-    {
-        OnClick(e.ClientX, e.ClientY);
-    }
+        GameState.MaybeStartDrag((float)x, (float)y, TransientState);
 
-
-    private void TouchEndCanvas(TouchEventArgs e)
-    {
-        var touch = e.ChangedTouches.FirstOrDefault();
-
-        if (touch is not null)
-        {
-            OnClick(touch.ClientX, touch.ClientY);
-        }
-    }
-
-    private void OnClick(double clientX, double clientY)
-    {
-        var x = clientX - _canvasPosition.Left;
-        var y = clientY - _canvasPosition.Top;
-
-        GameState.MaybeAddChosenShape((float)x, (float)y, TransientState);
-    }
-
-
-    private void MouseUpCanvas(MouseEventArgs e)
-    {
-        //render_required = false;
-        //mousedown = false;
-    }
-
-    private void MouseMoveCanvas(MouseEventArgs e)
+    }private void OnMouseMove(MouseEventArgs e)
     {
         var x = e.ClientX - _canvasPosition.Left;
         var y = e.ClientY - _canvasPosition.Top;
-        TransientState.MousePosition = new((float)x, (float)y);
+
+        GameState.OnDragMove((float)x, (float)y, TransientState);
+
+    }private void OnMouseOut(MouseEventArgs e)
+    {
+        GameState.EndDrag(TransientState);
+    }private void OnMouseUp(MouseEventArgs e)
+    {
+        GameState.EndDrag(TransientState);
     }
 
-    private void TouchMoveCanvas(TouchEventArgs e)
+    private void OnMouseWheel(WheelEventArgs obj)
     {
-        var touch = e.ChangedTouches.FirstOrDefault();
-        if (touch is not null)
+        var positive = obj.DeltaX + obj.DeltaY + obj.DeltaZ > 0;
+
+        GameState.RotateDragged(positive? -1 : 1 , TransientState);
+    }
+
+    private void OnKeyPress(KeyboardEventArgs obj)
+    {
+        if (obj.Key == "q")
         {
-            var x = touch.ClientX - _canvasPosition.Left;
-            var y = touch.ClientY - _canvasPosition.Top;
-            TransientState.MousePosition = new((float)x, (float)y);
+            GameState.RotateDragged(-1 , TransientState);
+        }
+        else if (obj.Key == "e")
+        {
+            GameState.RotateDragged(1 , TransientState);
         }
     }
 
-    private void MouseOutCanvas(MouseEventArgs e)
-    {
-        TransientState.MousePosition = null;
-    }
+//private void MouseDownCanvas(MouseEventArgs e)
+    //{
+    //    OnClick(e.ClientX, e.ClientY);
+    //}
 
-    private void TouchLeaveCanvas(TouchEventArgs e)
-    {
-        TransientState.MousePosition = null;
-    }
+
+    //private void TouchEndCanvas(TouchEventArgs e)
+    //{
+    //    var touch = e.ChangedTouches.FirstOrDefault();
+
+    //    if (touch is not null)
+    //    {
+    //        OnClick(touch.ClientX, touch.ClientY);
+    //    }
+    //}
+
+    ////private void OnClick(double clientX, double clientY)
+    ////{
+    ////    var x = clientX - _canvasPosition.Left;
+    ////    var y = clientY - _canvasPosition.Top;
+
+    ////    GameState.MaybeAddChosenShape((float)x, (float)y, TransientState);
+    ////}
+
+
+    //private void MouseUpCanvas(MouseEventArgs e)
+    //{
+    //    //render_required = false;
+    //    //mousedown = false;
+    //}
+
+    //private void MouseMoveCanvas(MouseEventArgs e)
+    //{
+    //    var x = e.ClientX - _canvasPosition.Left;
+    //    var y = e.ClientY - _canvasPosition.Top;
+    //    TransientState.DragPosition = new((float)x, (float)y);
+    //}
+
+    //private void TouchMoveCanvas(TouchEventArgs e)
+    //{
+    //    var touch = e.ChangedTouches.FirstOrDefault();
+    //    if (touch is not null)
+    //    {
+    //        var x = touch.ClientX - _canvasPosition.Left;
+    //        var y = touch.ClientY - _canvasPosition.Top;
+    //        TransientState.DragPosition = new((float)x, (float)y);
+    //    }
+    //}
+
+    //private void MouseOutCanvas(MouseEventArgs e)
+    //{
+    //    TransientState.DragPosition = null;
+    //}
+
+    //private void TouchLeaveCanvas(TouchEventArgs e)
+    //{
+    //    TransientState.DragPosition = null;
+    //}
 }

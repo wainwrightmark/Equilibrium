@@ -2,20 +2,20 @@
 
 public static class DrawHelpers
 {
-    public static async Task DrawBodyAsync(this Batch2D context, ShapeBodyPair shapeBodyPair)
+    public static async Task DrawBodyAsync(this Batch2D context, ShapeBody shapeBody)
     {
-        if(shapeBodyPair.Shape is null)return;
+        if(shapeBody.Shape is null)return;
         
         string color;
-        if (shapeBodyPair.Type == ShapeBodyType.Static)
+        if (shapeBody.Type == ShapeBodyType.Static)
             color = Colors.Grey;
-        else color = shapeBodyPair.Shape.Color;
+        else color = shapeBody.Shape.Color;
 
         await context.FillStyleAsync(color);
 
-        var transform = shapeBodyPair.Body.GetTransform();
+        var transform = shapeBody.Body.GetTransform();
 
-        foreach (var fixture in shapeBodyPair.Body.FixtureList ?? Enumerable.Empty<Fixture>())
+        foreach (var fixture in shapeBody.Body.FixtureList ?? Enumerable.Empty<Fixture>())
         {
             await DrawFixtureAsync(context, fixture, transform);
         }

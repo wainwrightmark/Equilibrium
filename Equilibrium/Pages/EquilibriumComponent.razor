@@ -5,15 +5,14 @@
     <div id="canvasContainer"
          @ref="_container"
          style="margin-left: auto; margin-right: auto; width: @(CanvasWidth + "px"); height: @(CanvasHeight + "px"); position: relative; border: 1px solid black;">
-        <Canvas @onmousemove="MouseMoveCanvas"
-                @onmouseup="MouseUpCanvas"
-                @onmousedown="MouseDownCanvas"
-                @onmouseout="MouseOutCanvas"
-
-                @ontouchleave="TouchLeaveCanvas"
-                @ontouchmove="TouchMoveCanvas"
-
-                @ontouchend="TouchEndCanvas"
+        <Canvas 
+            
+            @onmousedown="OnMouseDown"
+            @onmousemove="OnMouseMove"
+            @onmouseout="OnMouseOut"
+            @onmouseup="OnMouseUp"
+            @onmousewheel="OnMouseWheel"
+           @onkeypress="OnKeyPress"
 
                 @ref="_canvas"
                 Width="@CanvasWidth"
@@ -31,10 +30,11 @@
             <br/>
             <label>FPS: @TransientState.FramesPerSecond</label>
             <br/>
-            <button @onclick="() => GameState.Restart(TransientState)">Restart</button>
+            <button @onclick="RandomLevel">Random Level</button>
+            
             <br/>
 
-            @if (GameState.IsWin is not null)
+            @if (GameState.IsWin)
             {
 @if (GameState.Message is not null)
 {
@@ -49,25 +49,10 @@
                 <RatingComponent @bind-Rating="LevelFun"/>
                 <br/>
                 
-
-                <button @onclick="RandomLevel">Random Level</button>
+                <button @onclick="() => GameState.Restart(TransientState, new Random())">Restart</button>
+                
             }
         </div>
-
-
-    </div>
-
-
-    <div style="width: @(CanvasWidth + "px"); height: 135px; overflow-y: hidden; overflow-x: auto; margin-left: auto; margin-right: auto;">
-        <menu style="display: flex; list-style: none; padding: 0; margin-top: 5px;">
-            @foreach (var shape in GameState.RemainingShapes())
-            {
-                <div style="margin: 0; padding: 0;">
-                    <ShapeOptionComponent GameShape="shape.shape" Count="@shape.count" TransientState="TransientState"/>
-                </div>
-            }
-        </menu>
-
     </div>
 </div>
 
@@ -86,7 +71,7 @@
 
             var level = SavedLevels.First(x => x.Name == value);
             UserLevel = level;
-            GameState.ChangeLevel(UserLevel.Level, TransientState);
+            GameState.ChangeLevel(UserLevel.Level, TransientState, new Random());
         }
     }
 
@@ -104,7 +89,7 @@
         var level = Level.MakeRandomLevel(new Random(seed));
         UserLevel = new UserLevel(name, level, false, null, null);
 
-        GameState.ChangeLevel(level, TransientState);
+        GameState.ChangeLevel(level, TransientState, new Random());
     }
 
     private async Task SaveLevel()
@@ -135,5 +120,7 @@
         }
     }
 
+
+   
 
 }

@@ -1,42 +1,5 @@
 ﻿namespace Equilibrium.Pages;
 
-public class TransientState
-{
-    public (float X, float Y)? MousePosition { get; set; } = null;
-
-    public float LastTimestamp { get; set; } = 0;
-
-    public int FramesPerSecond { get; set; } = 0;
-
-    public ChosenShape? ChosenShape { get; set; } = null;
-
-    public float Step(float newTimestamp)
-    {
-        var dt = newTimestamp - LastTimestamp;
-        var newFps = 1000 / (newTimestamp - LastTimestamp);
-        FramesPerSecond = (int)newFps;
-        LastTimestamp = newTimestamp;
-        return dt;
-    }
-
-    public void RestartGame()
-    {
-        MousePosition = null;
-        ChosenShape = null;
-    }
-}
-
-public readonly record struct ScaleConstants(float XScale, float YScale, float XOffset, float YOffset)
-{
-    public Vector2 ScaleVector(float x, float y)
-    {
-        var vec = new Vector2(
-            (x - XOffset) / XScale,
-            (y - YOffset) / YScale);
-        return vec;
-    }
-}
-
 public class GameState
 {
     public GameState(Level level)
@@ -48,23 +11,21 @@ public class GameState
 
     public World World { get; }
     public Level Level { get; private set; }
-    public List<ShapeBodyPair> Bodies { get; } = new();
-    public Stack<(ChosenShape Shape, Vector2 Position)> ShapesToAdd { get; } = new();
+    public List<ShapeBody> Bodies { get; } = new();
 
-    public List<GameShape> AddedShapes { get; } = new();
 
     public ScaleConstants ScaleConstants { get; } = new(GameScale, GameScale, 0, 0);
 
-    public bool? IsWin { get; private set; } = null;
+    public bool IsWin { get; private set; } = false;
 
     public float? WinTime { get; private set; }
     public const float TimerMs = 5000;
-    public const float Gravity = 100 / GameScale;
+    public const float Gravity = 10;//0 / GameScale;
 
     /// <summary>
     /// How many physics units to one canvas pixel
     /// </summary>
-    public const float GameScale = 10;
+    public const float GameScale = 100;
 
     /// <summary>
     /// The relative size of shapes
@@ -73,68 +34,31 @@ public class GameState
 
     public const float Scale = ShapeScale / GameScale;
 
-    public event Action<GameState> StateChanged;
-
-    public void ChangeLevel(Level newLevel, TransientState transientState)
-    {
-        Level = newLevel;
-        Restart(transientState);
-    }
-
-    public void Restart(TransientState transientState)
-    {
-        IsWin = null;
-        WinTime = null;
-        World.Clear();
-        Bodies.Clear();
-        AddedShapes.Clear();
-        Bodies.AddRange(Level.SetupWorld(World,
-            EquilibriumComponent.CanvasWidth / GameScale,
-            EquilibriumComponent.CanvasHeight / GameScale,
-            Scale));
-
-        transientState.RestartGame();
-        StateChanged?.Invoke(this);
-    }
+    public event Action<GameState>? StateChanged;
 
 
-    public IEnumerable<(GameShape shape, int count)> RemainingShapes()
-    {
-        return Level.GetShapes().Concat(AddedShapes.Select(x => (x, -1)))
-            .GroupBy(x => x.Item1, x => x.Item2)
-            .Select(group => (group.Key, group.Sum()));
-    }
-
-    public void GameOver()
-    {
-        if (IsWin != true)
-        {
-            IsWin = false;
-            WinTime = null;
-            StateChanged?.Invoke(this);
-        }
-    }
-
-    public void Victory()
-    {
-        if (IsWin is null)
-        {
-            WinTime = null;
-            IsWin = true;
-            StateChanged?.Invoke(this);
-        }
-    }
-
-    public async Task StepAndDraw(float timeStamp, Batch2D batch, int width, int height, TransientState transientState)
+    public async Task StepAndDraw(float timeStamp,
+        Batch2D batch,
+        int width,
+        int height,
+        TransientState ts)
     {
         if (timeStamp >= WinTime)
         {
             Victory();
         }
 
+        if (ts.DragJustEnded)
+        {
+            ts.DragJustEnded = false;
+            if (!IsWin && WinTime is null) WinTime = timeStamp + TimerMs;
+        }
+
         await batch.LineWidthAsync(1 / GameScale);
 
+#pragma warning disable CS0618
         await batch.ResetTransformAsync();
+#pragma warning restore CS0618
 
         await batch.ClearRectAsync(0, 0, width, height);
 
@@ -150,7 +74,30 @@ public class GameState
             ScaleConstants.YOffset
         );
 
-        var dt = transientState.Step(timeStamp);
+
+        var dt = ts.Step(timeStamp);
+
+        if (ts.Drag is not null)
+        {
+            WinTime = null;
+
+            var body = Bodies[ts.Drag.BodyIndex];
+
+            var rotation = ts.Drag.Next.Rotation - body.Body.Rotation;
+            var vector = ts.Drag.Next.Position - body.Body.Position;
+            var adjustedVector = vector * dt;
+            var adjustedRotation = Math.Clamp(rotation * dt, -OneRotation * 10, OneRotation * 10);
+            const float maxVel = 5;
+
+            if (adjustedVector.LengthSquared() > maxVel)
+            {
+                adjustedVector.Normalize();
+                adjustedVector *= maxVel;
+            }
+
+            body.Body.LinearVelocity = adjustedVector;
+            body.Body.AngularVelocity = adjustedRotation;
+        }
 
         try
         {
@@ -161,70 +108,48 @@ public class GameState
             Console.WriteLine(e);
             return;
         }
-        
 
-        var shapeAdded = false;
-        while (ShapesToAdd.TryPop(out var shapeToAdd))
-        {
-            var newBody = shapeToAdd.Shape.Shape.Create(World, 
-                shapeToAdd.Position, 
-                shapeToAdd.Shape.Rotation, Scale, BodyType.Dynamic);
-            Bodies.Add(new ShapeBodyPair(shapeToAdd.Shape.Shape, newBody, ShapeBodyType.Dynamic));
-            shapeAdded = true;
-        }
-
-        if (shapeAdded && IsWin is null)
-        {
-            if (RemainingShapes().All(x => x.count <= 0))
-            {
-                WinTime = timeStamp + TimerMs;
-            }
-        }
-
+        var minPosition = ScaleConstants.ScaleVector(Vector2.Zero);
+        var maxPosition =
+            ScaleConstants.ScaleVector(EquilibriumComponent.CanvasWidth, EquilibriumComponent.CanvasHeight);
 
         foreach (var body in Bodies)
         {
-            if (IsWin is null && body.Type == ShapeBodyType.Wall)
+            //Stop win timer if an object hits the wall
+            if (IsWin == false && WinTime is not null && body.Type == ShapeBodyType.Wall)
             {
                 var contact = body.Body.ContactList;
                 while (contact is not null)
                 {
                     if (contact.Other.BodyType == BodyType.Dynamic)
                     {
-                        GameOver();
+                        WinTime = null;
+                        Console.WriteLine($"Contact between {body.Body.Tag} and {contact.Other.Tag}");
+                        break;
                     }
 
                     contact = contact.Next;
                 }
             }
 
+            //Make sure no body can leave the world
+            if (body.Body.Position.X < minPosition.X) body.Body.Position = body.Body.Position with { X = minPosition.X };
+            if (body.Body.Position.Y < minPosition.Y) body.Body.Position = body.Body.Position with { Y = minPosition.Y };
+            
+            if (body.Body.Position.X > maxPosition.X) body.Body.Position = body.Body.Position with { X = maxPosition.X };
+            if (body.Body.Position.Y > maxPosition.Y) body.Body.Position = body.Body.Position with { Y = maxPosition.Y };
+            
+
             if (body.Shape is not null)
             {
                 await batch.DrawBodyAsync(body);
             }
-
-            
         }
 
+#pragma warning disable CS0618
         await batch.ResetTransformAsync();
-        
+#pragma warning restore CS0618
 
-        var chosenShape = transientState.ChosenShape;
-
-        if (transientState.MousePosition is not null && chosenShape.HasValue)
-        {
-            await batch.FillStyleAsync(chosenShape.Value.Shape.Color);
-            await batch.LineWidthAsync(3);
-
-            var (x, y) = transientState.MousePosition.Value;
-
-            foreach (var shape in chosenShape.Value.Shape.GetShapes(ShapeScale))
-            {
-                await batch.DrawShapeAsync(
-                    shape,
-                    new Transform(new Vector2(x, y), chosenShape.Value.Rotation));
-            }
-        }
 
         if (WinTime is not null)
         {
@@ -236,39 +161,127 @@ public class GameState
         }
     }
 
+    public void ChangeLevel(Level newLevel, TransientState transientState, Random random)
+    {
+        Level = newLevel;
+        Restart(transientState, random);
+    }
+
+    public void Restart(TransientState transientState, Random random)
+    {
+        IsWin = false;
+        WinTime = null;
+        World.Clear();
+        Bodies.Clear();
+        Bodies.AddRange(Level.SetupWorld(World,
+            EquilibriumComponent.CanvasWidth / GameScale,
+            EquilibriumComponent.CanvasHeight / GameScale,
+            Scale));
+
+        foreach (var shapeMetadata in Level.Shapes)
+        {
+            var shape = GameShapeHelper.GetShapeByName(shapeMetadata.Shape);
+            for (var i = 0; i < shapeMetadata.Number; i++)
+            {
+                var x = random.NextSingle() * EquilibriumComponent.CanvasWidth;
+                var y = random.NextSingle() * EquilibriumComponent.CanvasHeight;
+                var newBody = shape.Create(World,
+                    ScaleConstants.ScaleVector(x, y),
+                    0, Scale, BodyType.Dynamic);
+
+                newBody.Tag = "Dynamic " + shape.Name;
+                //newBody.IsBullet = true;
+
+                Bodies.Add(new ShapeBody(shape, newBody, ShapeBodyType.Dynamic));
+            }
+        }
+
+        transientState.RestartGame();
+        StateChanged?.Invoke(this);
+    }
+
+
+    public void Victory()
+    {
+        if (IsWin is false)
+        {
+            WinTime = null;
+            IsWin = true;
+            StateChanged?.Invoke(this);
+        }
+    }
+
+    
+
+    public void MaybeStartDrag(float x, float y, TransientState transientState)
+    {
+        var worldVector = ScaleConstants.ScaleVector(x, y);
+        var fixture = World.TestPoint(worldVector);
+
+        if (fixture is null) return;
+
+        var bodyIndex = Bodies.FindIndex(shapeBody => shapeBody.Body.FixtureList.Contains(fixture));
+
+        if(bodyIndex < 0)return;
+        
+        var body = Bodies[bodyIndex];
+
+        if (body.Type == ShapeBodyType.Dynamic)
+        {
+            //body.Body.IsBullet = false;
+            body.Body.AngularVelocity = 0;
+            transientState.Drag = new Drag(body, bodyIndex, body.Body.Position - worldVector);
+        }
+    }
+
+    
+    public void EndDrag(TransientState transientState)
+    {
+        if (transientState.Drag is not null)
+        {
+            var body = Bodies[transientState.Drag.BodyIndex];
+
+            //Do this to reset contacts
+            World.Remove(body.Body);
+            World.Add(body.Body);
+
+
+            transientState.Drag = null;
+            transientState.DragJustEnded = true;
+        }
+    }
+
+    public void OnDragMove(float x, float y, TransientState transientState)
+    {
+        if (transientState.Drag is not null)
+        {
+            var v = ScaleConstants.ScaleVector(x, y);
+            transientState.Drag.SetNext(v + transientState.Drag.WorldCanvasOffset, transientState.Drag.Next.Rotation);
+        }
+    }
+
+    const float OneRotation = (float) Math.Tau /  16;
+
+    public void RotateDragged(int rotations, TransientState transientState)
+    {
+        if (transientState.Drag is not null)
+        {
+            var currentRotations = Math.Round(transientState.Drag.Next.Rotation / OneRotation);
+            var newAngle = (currentRotations + rotations) * OneRotation;
+
+            transientState.Drag.SetNext(transientState.Drag.Next.Position, (float)newAngle);
+        }
+    }
+
     public string? Message
     {
         get
         {
-            switch (IsWin)
+            return IsWin switch
             {
-                case true:
-                    return "You are Victorious!";
-                case false:
-                    return "Sorry! You lost!";
-                default:
-                {
-                    return null;
-                }
-            }
+                true => "You are Victorious!",
+                false => null
+            };
         }
-    }
-
-
-    public void MaybeAddChosenShape(float x, float y, TransientState transientState)
-    {
-        var chosenShape = transientState.ChosenShape;
-
-        if (chosenShape.HasValue)
-        {
-            var vec = ScaleConstants.ScaleVector(x, y);
-
-            ShapesToAdd.Push((chosenShape.Value, vec));
-            AddedShapes.Add(chosenShape.Value.Shape);
-
-            transientState.ChosenShape = null;
-        }
-
-        transientState.MousePosition = null;
     }
 }

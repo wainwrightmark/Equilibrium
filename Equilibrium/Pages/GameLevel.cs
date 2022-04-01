@@ -42,13 +42,24 @@ public sealed record Level(string InitialShape,
         return Shapes.Select(valueTuple => (GameShapeHelper.GetShapeByName(valueTuple.Shape), valueTuple.Number));
     }
 
-    public IEnumerable<ShapeBodyPair> SetupWorld(World world, float width, float height, float shapeScale)
+    public IEnumerable<ShapeBody> SetupWorld(World world, float width, float height, float shapeScale)
     {
         //Walls
-        yield return new (null, world.CreateEdge(new Vector2(0, 0), new Vector2(width, 0)), ShapeBodyType.Wall) ;
-        yield return new (null, world.CreateEdge(new Vector2(width, 0), new Vector2(width, height)), ShapeBodyType.Wall) ;
-        yield return new (null, world.CreateEdge(new Vector2(width, height), new Vector2(0, height)), ShapeBodyType.Wall) ;
-        yield return new (null, world.CreateEdge(new Vector2(0, height), new Vector2(0, 0)), ShapeBodyType.Wall) ;
+
+        var bottomWall =world.CreateEdge(new Vector2(width, height), new Vector2(0, height));
+        var topWall =  world.CreateEdge(new Vector2(0, 0), new Vector2(width, 0));
+        var leftWall = world.CreateEdge(new Vector2(0, height), new Vector2(0, 0));
+        var rightWall = world.CreateEdge(new Vector2(width, 0), new Vector2(width, height));
+
+        bottomWall.Tag = "Bottom Wall";
+        topWall.Tag = "Top Wall";
+        leftWall.Tag = "Left Wall";
+        rightWall.Tag = "Right Wall";
+
+        yield return new (null,bottomWall , ShapeBodyType.Wall) ;
+        yield return new (null, rightWall, ShapeBodyType.Wall) ;
+        yield return new (null, topWall, ShapeBodyType.Wall) ;
+        yield return new (null, leftWall, ShapeBodyType.Wall) ;
 
         var initialShape = GameShapeHelper.GetShapeByName(InitialShape);
 
@@ -59,8 +70,8 @@ public sealed record Level(string InitialShape,
 
 
         var body = initialShape.Create(world, initialShapePosition, initialRotation, shapeScale, BodyType.Static);
-
-        yield return new ShapeBodyPair(initialShape, body, ShapeBodyType.Static);
+        body.Tag = "Static " + initialShape.Name;
+        yield return new ShapeBody(initialShape, body, ShapeBodyType.Static);
     }
     
 

@@ -21,10 +21,10 @@ public static class GameShapeHelper
         = new List<GameShape>()
         {
             CircleGameShape.Instance,
-            HemisphereGameShape.Instance,
+            //HemisphereGameShape.Instance,
             BoxGameShape.Instance,
             EllGameShape.Instance,
-            LollipopGameShape.Instance,
+            //LollipopGameShape.Instance,
             TriangleGameShape.Instance,
             CrossGameShape.Instance
         };
@@ -155,7 +155,7 @@ public class BoxGameShape : ComplexPolygonGameShape
     /// <inheritdoc />
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
-        yield return PolygonTools.CreateRectangle(scale / 2f, scale / 2f);
+        yield return PolygonTools.CreateRectangle(scale / 4f, scale / 4f);
     }
 
     /// <inheritdoc />
@@ -213,10 +213,10 @@ public class EllGameShape : ComplexPolygonGameShape
 
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
-        var qScale = scale / 8;
+        var qScale = scale / 16;
 
-        yield return PolygonTools.CreateRectangle(4 * qScale, qScale);
-        yield return PolygonTools.CreateRectangle(qScale, 6 * qScale,
+        yield return PolygonTools.CreateRectangle(4 * qScale, qScale* 2);
+        yield return PolygonTools.CreateRectangle(qScale * 2, 6 * qScale,
             new Vector2(3f * qScale, 5f * qScale), 0);
     }
 

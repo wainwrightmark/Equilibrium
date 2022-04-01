@@ -8,4 +8,6 @@ public enum ShapeBodyType
     Dynamic
 }
 
-public readonly record struct ShapeBodyPair(GameShape? Shape, Body Body, ShapeBodyType Type);
+public readonly record struct ShapeBody(GameShape? Shape,
+    Body Body,
+    ShapeBodyType Type);
