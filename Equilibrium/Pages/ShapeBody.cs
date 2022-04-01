@@ -10,4 +10,5 @@ public enum ShapeBodyType
 
 public readonly record struct ShapeBody(GameShape? Shape,
     Body Body,
+    DrawableGameShape? DrawableGameShape,
     ShapeBodyType Type);

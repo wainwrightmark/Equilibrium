@@ -61,7 +61,8 @@ public class GameState
 #pragma warning restore CS0618
 
         await batch.ClearRectAsync(0, 0, width, height);
-
+        await batch.FillStyleAsync("AliceBlue");
+        await batch.FillRectAsync(0, 0, width, height);
 
         await batch.StrokeStyleAsync(Colors.Black);
 
@@ -139,7 +140,7 @@ public class GameState
 
             if (body.Shape is not null)
             {
-                await batch.DrawBodyAsync(body, "A0");
+                await batch.DrawBodyAsync(body, "90");
             }
         }
 
@@ -234,7 +235,7 @@ public class GameState
                 newBody.Tag = "Dynamic " + shape.Name;
                 //newBody.IsBullet = true;
 
-                Bodies.Add(new ShapeBody(shape, newBody, ShapeBodyType.Dynamic));
+                Bodies.Add(new ShapeBody(shape, newBody, shape.GetDrawable(Scale), ShapeBodyType.Dynamic));
             }
         }
 
@@ -322,6 +323,16 @@ public class GameState
 
         transientState.Drags.Remove(drag);
         transientState.ShouldCheckForWin = true;
+    }
+
+    public void EndAllTouchDrags(TransientState transientState)
+    {
+        var tds = transientState.Drags.Where(x => x.DragIdentifier is TouchDragIdentifier).ToList();
+
+        foreach (var drag in tds)
+        {
+            EndDrag(drag.DragIdentifier, transientState);
+        }
     }
 
     public void OnDragMove(DragIdentifier identifier, float x, float y, TransientState transientState)

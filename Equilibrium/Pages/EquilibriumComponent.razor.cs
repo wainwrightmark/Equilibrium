@@ -141,6 +141,9 @@ public partial class EquilibriumComponent
         {
             GameState.EndDrag(new TouchDragIdentifier(touchPoint.Identifier), TransientState);   
         }
+
+        if (!e.Touches.Any())//Incase any drag end events get dropped
+            GameState.EndAllTouchDrags(TransientState);
     }
 
     private void OnTouchCancel(TouchEventArgs e)
@@ -150,7 +153,6 @@ public partial class EquilibriumComponent
             GameState.EndDrag(new TouchDragIdentifier(touchPoint.Identifier), TransientState);   
         }
     }
-    
     
     private void OnMouseUp(MouseEventArgs e)
     {
@@ -175,59 +177,4 @@ public partial class EquilibriumComponent
             GameState.RotateDragged(1 , TransientState);
         }
     }
-
-//private void MouseDownCanvas(MouseEventArgs e)
-    //{
-    //    OnClick(e.ClientX, e.ClientY);
-    //}
-
-
-    //private void TouchEndCanvas(TouchEventArgs e)
-    //{
-    //    var touch = e.ChangedTouches.FirstOrDefault();
-
-    //    if (touch is not null)
-    //    {
-    //        OnClick(touch.ClientX, touch.ClientY);
-    //    }
-    //}
-
-    ////private void OnClick(double clientX, double clientY)
-    ////{
-    ////    var x = clientX - _canvasPosition.Left;
-    ////    var y = clientY - _canvasPosition.Top;
-
-    ////    GameState.MaybeAddChosenShape((float)x, (float)y, TransientState);
-    ////}
-
-
-    //private void MouseUpCanvas(MouseEventArgs e)
-    //{
-    //    //render_required = false;
-    //    //mousedown = false;
-    //}
-
-    //private void MouseMoveCanvas(MouseEventArgs e)
-    //{
-    //    var x = e.ClientX - _canvasPosition.Left;
-    //    var y = e.ClientY - _canvasPosition.Top;
-    //    TransientState.DragPosition = new((float)x, (float)y);
-    //}
-
-    //private void TouchMoveCanvas(TouchEventArgs e)
-    //{
-    //    var touch = e.ChangedTouches.FirstOrDefault();
-    //    if (touch is not null)
-    //    {
-    //        var x = touch.ClientX - _canvasPosition.Left;
-    //        var y = touch.ClientY - _canvasPosition.Top;
-    //        TransientState.DragPosition = new((float)x, (float)y);
-    //    }
-    //}
-    
-
-    //private void TouchLeaveCanvas(TouchEventArgs e)
-    //{
-    //    TransientState.DragPosition = null;
-    //}
 }

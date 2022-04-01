@@ -4,7 +4,7 @@ public static class DrawHelpers
 {
     public static async Task DrawBodyAsync(this Batch2D context, ShapeBody shapeBody, string opacityString)
     {
-        if(shapeBody.Shape is null)return;
+        if(shapeBody.Shape is null || shapeBody.DrawableGameShape is null)return;
         
         string color;
         if (shapeBody.Type == ShapeBodyType.Static)
@@ -12,14 +12,9 @@ public static class DrawHelpers
         else color = shapeBody.Shape.Color;
 
         await context.FillStyleAsync(color + opacityString);
-        
-
         var transform = shapeBody.Body.GetTransform();
-
-        foreach (var fixture in shapeBody.Body.FixtureList ?? Enumerable.Empty<Fixture>())
-        {
-            await DrawFixtureAsync(context, fixture, transform);
-        }
+        await shapeBody.DrawableGameShape.DrawAsync(context, transform);
+        
     }
 
     public static Task DrawFixtureAsync(this Batch2D context, Fixture fixture, Transform transform)

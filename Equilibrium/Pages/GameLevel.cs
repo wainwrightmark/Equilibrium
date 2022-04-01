@@ -56,10 +56,10 @@ public sealed record Level(string InitialShape,
         leftWall.Tag = "Left Wall";
         rightWall.Tag = "Right Wall";
 
-        yield return new (null,bottomWall , ShapeBodyType.Wall) ;
-        yield return new (null, rightWall, ShapeBodyType.Wall) ;
-        yield return new (null, topWall, ShapeBodyType.Wall) ;
-        yield return new (null, leftWall, ShapeBodyType.Wall) ;
+        yield return new (null, bottomWall , null,ShapeBodyType.Wall) ;
+        yield return new (null, rightWall,null, ShapeBodyType.Wall) ;
+        yield return new (null, topWall, null,ShapeBodyType.Wall) ;
+        yield return new (null, leftWall,null, ShapeBodyType.Wall) ;
 
         var initialShape = GameShapeHelper.GetShapeByName(InitialShape);
 
@@ -71,7 +71,7 @@ public sealed record Level(string InitialShape,
 
         var body = initialShape.Create(world, initialShapePosition, initialRotation, shapeScale, BodyType.Static);
         body.Tag = "Static " + initialShape.Name;
-        yield return new ShapeBody(initialShape, body, ShapeBodyType.Static);
+        yield return new ShapeBody(initialShape, body, initialShape.GetDrawable(shapeScale), ShapeBodyType.Static);
     }
     
 
