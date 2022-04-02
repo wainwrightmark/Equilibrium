@@ -9,7 +9,7 @@
     "assembly": {
       "Aether.Physics2D.dll": "sha256-A2FxhkXV82SIBsj7BN9vxmnlbxWVJEvCosgNOsfUbV8=",
       "Blazor.Canvas.dll": "sha256-aA0uGyFpEH85d6egA2HNNzmxuPAxDB9i7B\/KcHzxuN4=",
-      "Equilibrium.dll": "sha256-Hm8WjJqqO+9Rd7s5\/XK7x9LeqYu+DxwWlwSK6mMVg6Y=",
+      "Equilibrium.dll": "sha256-HzQcrGJPBUIEDJnRvqFziW00lJXsvPyzKVTBfkr\/8JM=",
       "Excubo.Generators.Blazor.Attributes.dll": "sha256-FS0UASOlI6EEkuqXobbjVvLY4P\/Z0QCumkHvP8wnCjs=",
       "Majorsoft.Blazor.Components.Common.JsInterop.dll": "sha256-98iiXDeawIkOj8IhkHsxBAaPBW0M7sEneVWPXnUd0QM=",
       "Majorsoft.Blazor.Extensions.BrowserStorage.dll": "sha256-CzSPfGpINxopBMIcknFAfkTmJTHWzMsUyJiq9fo538Q=",
@@ -32,7 +32,7 @@
       "System.Collections.dll": "sha256-Szr+Rv44JaIf2DsX1mQ15dol\/Vhzrg3ZmroQVN8VlyU=",
       "System.Collections.NonGeneric.dll": "sha256-b59RUDbkOqbE2iFmXr3M+\/I1M4BleTRmfZRQqhOVNIs=",
       "System.ComponentModel.dll": "sha256-Yt2oJcpvCsQOKO97AQ\/IzcRVhDgp3QbftjrgtCAbE8M=",
-      "System.Console.dll": "sha256-KspCnCpF18\/+pwp4s8pnPnN3uiKYS28ATiUpkbnZDdA=",
+      "System.Console.dll": "sha256-RMrjo8pj5ILs\/A+risJPFjTUGR30Qub5PfONrcndBeY=",
       "System.Diagnostics.TraceSource.dll": "sha256-xljsa9mjurPnAMGOLkAp3LmudfpDHwOqiM9oD6lLp9k=",
       "System.Linq.Async.dll": "sha256-FJdXpBE65hAsQl8UaafMFN6yhjXpTLyeBAT15NxRgAE=",
       "System.Linq.dll": "sha256-iUSzNdeR2V6Ub\/I+YLHohFeKX6AArAULaFVZveiA50k=",
@@ -60,8 +60,8 @@
     "libraryInitializers": null,
     "pdb": null,
     "runtime": {
-      "dotnet.6.0.3.fwzvfw49ed.js": "sha256-Iku8r7YuT9RvnxDYhVvUJuiWEM45sJGMa92x6Tqrtn8=",
-      "dotnet.wasm": "sha256-YUcqVLiBn7rGmBsrLBjzep99g06oO2TeWvYqLnBceoU="
+      "dotnet.6.0.3.fwzvfw49ed.js": "sha256-NDuOvqez5jdX\/T6XsN5w\/PK3AUQUosr8i\/ZMpFJ9wiU=",
+      "dotnet.wasm": "sha256-8si6CjnJTWkY5DPkNjmzvLQG0eNW54qCUV2MzKG32j4="
     },
     "satelliteResources": null
   }
