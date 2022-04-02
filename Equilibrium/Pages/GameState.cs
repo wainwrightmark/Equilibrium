@@ -94,9 +94,13 @@ public class GameState
             }
 
             var rotation = (GetRotationDifference(drag.Next.Rotation, body.Body.Rotation) * dt) - body.Body.AngularVelocity;
+            const float maxRotationAcc = 10;
+            var adjustedRotation = Math.Clamp(rotation, -OneRotation * maxRotationAcc, OneRotation * maxRotationAcc);
+
+             //TODO make it slow down as it approaches the target
             var vector = drag.Next.Position - body.Body.Position;
             var accVector = (vector * dt) - body.Body.LinearVelocity;
-            var adjustedRotation = Math.Clamp(rotation, -OneRotation * 10, OneRotation * 10);
+            
             const float maxAcc = 1;
             
             if (accVector.LengthSquared() > maxAcc)
@@ -130,7 +134,7 @@ public class GameState
                     if (contact.Other.BodyType == BodyType.Dynamic)
                     {
                         WinTime = null;
-                        Console.WriteLine($"Contact between {body.Body.Tag} and {contact.Other.Tag}");
+                        //Console.WriteLine($"Contact between {body.Body.Tag} and {contact.Other.Tag}");
                         break;
                     }
 
@@ -138,11 +142,11 @@ public class GameState
                 }
             }
 
-            if (body.Shape is not null)
-            {
-                await batch.DrawBodyAsync(body, "90");
-            }
+            //This will not draw walls
+            await batch.DrawBodyAsync(body, "90");
         }
+
+        Vector2? projectionPosition = null;
 
         //Draw Touch Drag Crosshairs
         foreach (var touchDrag in ts.Drags.Where(x=>x.DragIdentifier is TouchDragIdentifier))
@@ -162,27 +166,37 @@ public class GameState
 
                 await batch.StrokeAsync();
 
+
+                if (projectionPosition is null)
+                    projectionPosition = body.Body.Position;
+            }
+        }
+
+        //await batch.StrokeStyleAsync("transparent");
+
+        if (projectionPosition is not null)
+        {
+            const float projectionSize = 3;
+
+
+            await batch.SetTransformAsync(
+                ScaleConstants.XScale * projectionSize,
+                0,
+                0,
+                ScaleConstants.YScale * projectionSize,
+                ScaleConstants.XOffset - (projectionPosition.Value.X * ScaleConstants.XScale * (projectionSize-1 )),
+                ScaleConstants.YOffset  - (projectionPosition.Value.Y * ScaleConstants.YScale* (projectionSize-1 ))
+            );
+
+
+            foreach (var shapeBody in Bodies)
+            {
+                if (shapeBody.Shape is not null)
+                {
+                    await batch.StrokeStyleAsync(shapeBody.Shape.Color + "40");
+                    await batch.DrawBodyAsync(shapeBody, "40");
+                }
                 
-                await batch.SetTransformAsync(
-                    ScaleConstants.XScale * 2,
-                    0,
-                    0,
-                    ScaleConstants.YScale * 2,
-                    (ScaleConstants.XOffset  * 2) - body.Body.Position.X * ScaleConstants.XScale,
-                    (ScaleConstants.YOffset  * 2) - body.Body.Position.Y * ScaleConstants.YScale
-                );
-
-
-                await batch.DrawBodyAsync(body, "80");
-
-                await batch.SetTransformAsync(
-                    ScaleConstants.XScale,
-                    0,
-                    0,
-                    ScaleConstants.YScale,
-                    ScaleConstants.XOffset,
-                    ScaleConstants.YOffset
-                );
             }
         }
 
