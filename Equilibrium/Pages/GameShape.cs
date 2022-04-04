@@ -241,15 +241,6 @@ public abstract class ComplexPolygonGameShape : GameShape
         return world.CreateCompoundPolygon(GetVertices(scale).ToList(), Density, position, rotation, bodyType);
     }
 
-    ///// <inheritdoc />
-    //public override IEnumerable<Shape> GetShapes(float scale)
-    //{
-    //    foreach (var vertices in GetVertices(scale))
-    //    {
-    //        yield return new PolygonShape(vertices, 1);
-    //    }
-    //}
-
     protected abstract IEnumerable<Vertices> GetVertices(float scale);
 
     /// <inheritdoc />

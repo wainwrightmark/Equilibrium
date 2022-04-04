@@ -1,4 +1,5 @@
 ﻿namespace Equilibrium.Pages;
+using static Constants;
 
 public class GameState
 {
@@ -19,20 +20,9 @@ public class GameState
     public bool IsWin { get; private set; } = false;
 
     public float? WinTime { get; private set; }
-    public const float TimerMs = 5000;
-    public const float Gravity = 10;//0 / GameScale;
+    
 
-    /// <summary>
-    /// How many physics units to one canvas pixel
-    /// </summary>
-    public const float GameScale = 100;
-
-    /// <summary>
-    /// The relative size of shapes
-    /// </summary>
-    public const float ShapeScale = 60;
-
-    public const float Scale = ShapeScale / GameScale;
+    
 
     public event Action<GameState>? StateChanged;
 
@@ -61,7 +51,7 @@ public class GameState
 #pragma warning restore CS0618
 
         await batch.ClearRectAsync(0, 0, width, height);
-        await batch.FillStyleAsync("AliceBlue");
+        await batch.FillStyleAsync("CornSilk");
         await batch.FillRectAsync(0, 0, width, height);
 
         await batch.StrokeStyleAsync(Colors.Black);
@@ -77,7 +67,7 @@ public class GameState
 
 
         var dt = ts.Step(timeStamp);
-
+        var physicsDt = dt / 1000;
 
         foreach (var drag in ts.Drags)
         {
@@ -85,37 +75,12 @@ public class GameState
 
             var body = Bodies[drag.BodyIndex];
 
-            static float GetRotationDifference(float r1, float r2)
-            {
-                var diff = r1 - r2;
-                while (diff > Math.PI) diff -= (float) Math.Tau;
-                while (diff < -Math.PI) diff += (float)Math.Tau;
-                return diff;
-            }
-
-            var rotation = (GetRotationDifference(drag.Next.Rotation, body.Body.Rotation) * dt) - body.Body.AngularVelocity;
-            const float maxRotationAcc = 10;
-            var adjustedRotation = Math.Clamp(rotation, -OneRotation * maxRotationAcc, OneRotation * maxRotationAcc);
-
-             //TODO make it slow down as it approaches the target
-            var vector = drag.Next.Position - body.Body.Position;
-            var accVector = (vector * dt) - body.Body.LinearVelocity;
-            
-            const float maxAcc = 1;
-            
-            if (accVector.LengthSquared() > maxAcc)
-            {
-                accVector.Normalize();
-                accVector  *= maxAcc;
-            }
-            
-            body.Body.LinearVelocity += accVector;
-            body.Body.AngularVelocity += adjustedRotation;
+            drag.ApplyToBody(body.Body, physicsDt);
         }
 
         try
         {
-            World.Step(dt / 1000);
+            World.Step(physicsDt);
         }
         catch (Exception e)
         {
@@ -159,10 +124,10 @@ public class GameState
                 await batch.BeginPathAsync();
 
                 await batch.MoveToAsync(body.Body.Position.X,0);
-                await batch.LineToAsync(body.Body.Position.X, EquilibriumComponent.CanvasHeight );
+                await batch.LineToAsync(body.Body.Position.X, GameHeight );
 
                 await batch.MoveToAsync(0, body.Body.Position.Y);
-                await batch.LineToAsync(EquilibriumComponent.CanvasWidth, body.Body.Position.Y);
+                await batch.LineToAsync(GameWidth, body.Body.Position.Y);
 
                 await batch.StrokeAsync();
 
@@ -229,8 +194,8 @@ public class GameState
         World.Clear();
         Bodies.Clear();
         Bodies.AddRange(Level.SetupWorld(World,
-            EquilibriumComponent.CanvasWidth / GameScale,
-            EquilibriumComponent.CanvasHeight / GameScale,
+            GameWidth / GameScale,
+            GameHeight / GameScale,
             Scale));
 
         foreach (var shapeMetadata in Level.Shapes)
@@ -238,16 +203,16 @@ public class GameState
             var shape = GameShapeHelper.GetShapeByName(shapeMetadata.Shape);
             for (var i = 0; i < shapeMetadata.Number; i++)
             {
-                var x = random.NextSingle() * EquilibriumComponent.CanvasWidth / 2;
-                var y = random.NextSingle() * EquilibriumComponent.CanvasHeight / 2;
+                var x = random.NextSingle() * GameWidth / 2;
+                var y = random.NextSingle() * GameHeight / 2;
                 var newBody = shape.Create(World,
-                    ScaleConstants.ScaleVector(x + EquilibriumComponent.CanvasWidth / 4 , y + EquilibriumComponent.CanvasHeight / 4),
+                    ScaleConstants.ScaleVector(x + GameWidth / 4 , y + GameHeight / 4),
                     0, Scale, BodyType.Dynamic);
 
                 newBody.LinearVelocity = ScaleConstants.ScaleVector(new Vector2(0, -10 *random.NextSingle() * ShapeScale));
 
                 newBody.Tag = "Dynamic " + shape.Name;
-                //newBody.IsBullet = true;
+                newBody.IsBullet = true;
 
                 Bodies.Add(new ShapeBody(shape, newBody, shape.GetDrawable(Scale), ShapeBodyType.Dynamic));
             }
@@ -294,6 +259,7 @@ public class GameState
             {
                 //body.Body.IsBullet = false;
                 body.Body.AngularVelocity = 0;
+                body.Body.IgnoreGravity = true;
                 var drag = new Drag(identifier, body, bodyIndex, body.Body.Position - worldVector);
                 transientState.Drags.Add(drag);
             }
@@ -306,7 +272,7 @@ public class GameState
 
             if(dragToRotate != null)
                 dragToRotate.Rotation =
-                new DragRotation(dfi, dragToRotate.Next.Position, worldVector, dragToRotate.Next.Rotation);
+                new DragRotation(dfi, dragToRotate.Desired.Position, worldVector, dragToRotate.Desired.Rotation);
         }
 
         
@@ -330,6 +296,7 @@ public class GameState
         }
 
         var body = Bodies[drag.BodyIndex];
+        body.Body.IgnoreGravity = false;
 
         //Do this to reset contacts
         World.Remove(body.Body);
@@ -370,7 +337,7 @@ public class GameState
 
                     //Console.WriteLine($"FullAngle: {fullAngle.ToString("F2")} Rotation: {angle.ToString("F2")}");
 
-                    rotDrag.SetNext(rotDrag.Next.Position, (float)fullAngle);
+                    rotDrag.SetNext(rotDrag.Desired.Position, (float)fullAngle);
 
                 }
             }
@@ -378,19 +345,19 @@ public class GameState
             return;
         }
 
-        drag.SetNext(v + drag.WorldCanvasOffset, drag.Next.Rotation);
+        drag.SetNext(v + drag.WorldCanvasOffset, drag.Desired.Rotation);
     }
 
-    const float OneRotation = (float) Math.Tau /  16;
+    
 
     public void RotateDragged(int rotations, TransientState transientState)
     {
         foreach (var drag in transientState.Drags)
         {
-            var currentRotations = Math.Round(drag.Next.Rotation / OneRotation);
-            var newAngle = (currentRotations + rotations) * OneRotation;
+            var currentRotations = Math.Round(drag.Desired.Rotation / Constants.OneRotation);
+            var newAngle = (currentRotations + rotations) * Constants.OneRotation;
 
-            drag.SetNext(drag.Next.Position, (float)newAngle);
+            drag.SetNext(drag.Desired.Position, (float)newAngle);
         }
         
     }

@@ -1,5 +1,5 @@
 ﻿namespace Equilibrium.Pages;
-
+using static Constants;
 
 public abstract record DragIdentifier;
 
@@ -19,7 +19,7 @@ public class Drag
         DragIdentifier = dragIdentifier;
         BodyIndex = bodyIndex;
         
-        Next = (body.Body.Position, body.Body.Rotation);
+        Desired = (body.Body.Position, body.Body.Rotation);
         WorldCanvasOffset = worldCanvasOffset;
     }
 
@@ -29,14 +29,55 @@ public class Drag
     public Vector2 WorldCanvasOffset { get;  }
 
 
-    public (Vector2 Position, float Rotation) Next { get; private set; } 
+    public (Vector2 Position, float Rotation) Desired { get; private set; } 
 
     public void SetNext(Vector2 position, float rotation)
     {
-        Next = (position, rotation);
+        Desired = (position, rotation);
     }
 
     public DragRotation? Rotation { get; set; }
+
+    public void ApplyToBody(Body body, float dt)
+    {
+        var currentRotDistance = (GetRotationDifference(Desired.Rotation, body.Rotation) / dt); //rad/s
+        var projectedRotDistance = currentRotDistance - body.AngularVelocity; //rad/s
+        const float maxRotationAcc = 1 * OneRotation; //rad
+        var adjustedRotation = Math.Clamp(projectedRotDistance, -maxRotationAcc / dt, maxRotationAcc /dt);
+
+        body.AngularVelocity += adjustedRotation;
+
+        //TODO make it slow down as it approaches the target
+        var currentDistance = Desired.Position - (body.Position) ; //m
+        var projectedDistance = currentDistance - (body.LinearVelocity * dt); //m
+
+
+        var accVector = (projectedDistance / (dt * dt)); //m/s squared
+            
+        const float maxAcc = 10f;//m/s squared
+
+        if (accVector.LengthSquared() > maxAcc)
+        {
+
+            if (currentDistance.LengthSquared() > projectedDistance.LengthSquared())//Do not limit breaking acceleration
+            {
+                accVector.Normalize(); //unit
+                accVector  *= maxAcc; //m / s2
+            }
+        }
+            
+        body.LinearVelocity += (accVector * dt); //m/s
+        
+    }
+    
+
+    static float GetRotationDifference(float r1, float r2)
+    {
+        var diff = r1 - r2;
+        while (diff > Math.PI) diff -= (float) Math.Tau;
+        while (diff < -Math.PI) diff += (float)Math.Tau;
+        return diff;
+    }
 }
 
 public record DragRotation(TouchDragIdentifier RotationIdentifier, 

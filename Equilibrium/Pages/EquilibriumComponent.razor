@@ -1,10 +1,11 @@
 ﻿@using tainicom.Aether.Physics2D.Dynamics
 @using tainicom.Aether.Physics2D.Common
+@using static Constants;
 
 <div style="width: 100%; height: 100%;">
     <div id="canvasContainer"
          @ref="_container"
-         style="margin-left: auto; margin-right: auto; width: @(CanvasWidth + "px"); height: @(CanvasHeight + "px"); position: relative; border: 1px solid black;">
+         style="margin-left: auto; margin-right: auto; width: @(GameWidth + "px"); height: @(GameHeight + "px"); position: relative; border: 1px solid black;">
         <Canvas 
             
             @onmousedown="OnMouseDown"
@@ -20,8 +21,8 @@
             @onkeypress="OnKeyPress"
 
                 @ref="_canvas"
-                Width="@CanvasWidth"
-                Height="@CanvasHeight">
+                Width="@GameWidth"
+                Height="@GameHeight">
         </Canvas>
 
         <div style="position: absolute; top: 25px; left: 50px;">
@@ -64,8 +65,7 @@
 
 @code{
         
-    public const float CanvasWidth = 350;
-    public const float CanvasHeight = 500;
+    
 
     public string LevelName
     {
