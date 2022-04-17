@@ -181,7 +181,10 @@ public class HemisphereGameShape : ComplexPolygonGameShape
     /// <inheritdoc />
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
-        yield return PolygonTools.CreateArc((float)Math.PI, 8, scale / 2);
+        yield return
+            new Vertices(
+            PolygonTools.CreateArc((float)Math.PI * 1.2f, 9, scale / 2)
+            .Select(x=> x + new Vector2(0, -scale / 4)));
     }
 
     /// <inheritdoc />
@@ -333,7 +336,7 @@ public class LollipopGameShape : ComplexPolygonGameShape
     /// <inheritdoc />
     protected override IEnumerable<Vertices> GetVertices(float scale)
     {
-        yield return PolygonTools.CreateCircle(scale / 4, 16);
+        yield return PolygonTools.CreateCircle(scale / 4, 8);
         yield return PolygonTools.CreateRectangle(scale / 8, scale / 2, new Vector2(0, scale / 2), 0);
     }
 
