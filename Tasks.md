@@ -12,11 +12,11 @@
 
 
 - [ ] Closeable popup window on win
-- [ ] Better control on touch
-- [ ] Game should fill screen on phones
+- [x] Better control on touch
+- [x] Game should fill screen on phones
 
 
-- [ ] Fix Index out of bounds
+- [x] Fix Index out of bounds
 - [x] Make shapes look nice. Use proportions from Rust
 - [x] Use offsets when dragging
 - [x] Allow rotation

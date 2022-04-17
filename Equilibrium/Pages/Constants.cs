@@ -40,5 +40,5 @@ public static class Constants
     /// <summary>
     /// The height of the game world in pixels
     /// </summary>
-    public const float GameHeight = 500;
+    public const float GameHeight = 800;
 }

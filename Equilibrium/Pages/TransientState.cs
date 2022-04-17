@@ -7,9 +7,11 @@ public class TransientState
 
     public float LastTimestamp { get; set; } = 0;
 
+    public float YOffset { get; set; } = 0;
+
     public int FramesPerSecond { get; set; } = 0;
 
-    public bool ShouldCheckForWin  {get; set;} = false;
+    public bool ShouldCheckForWin { get; set; } = false;
 
     public float Step(float newTimestamp)
     {

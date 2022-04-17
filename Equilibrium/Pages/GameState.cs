@@ -9,23 +9,17 @@ public class GameState
         Level = level;
     }
 
-
     public World World { get; }
     public Level Level { get; private set; }
     public List<ShapeBody> Bodies { get; } = new();
-
 
     public ScaleConstants ScaleConstants { get; } = new(GameScale, GameScale, 0, 0);
 
     public bool IsWin { get; private set; } = false;
 
     public float? WinTime { get; private set; }
-    
-
-    
 
     public event Action<GameState>? StateChanged;
-
 
     public async Task StepAndDraw(float timeStamp,
         Batch2D batch,
@@ -43,6 +37,9 @@ public class GameState
             ts.ShouldCheckForWin = false;
             if (!IsWin && WinTime is null) WinTime = timeStamp + TimerMs;
         }
+
+        ts.YOffset = ScaleConstants.YOffset -
+            (height < Constants.GameHeight ? Constants.GameHeight - height : 0);
 
         await batch.LineWidthAsync(1 / GameScale);
 
@@ -62,7 +59,7 @@ public class GameState
             0,
             ScaleConstants.YScale,
             ScaleConstants.XOffset,
-            ScaleConstants.YOffset
+            ts.YOffset
         );
 
 
@@ -87,7 +84,7 @@ public class GameState
             Console.WriteLine(e);
             return;
         }
-        
+
         foreach (var body in Bodies)
         {
             //Stop win timer if an object hits the wall
@@ -114,7 +111,7 @@ public class GameState
         Vector2? projectionPosition = null;
 
         //Draw Touch Drag Crosshairs
-        foreach (var touchDrag in ts.Drags.Where(x=>x.DragIdentifier is TouchDragIdentifier))
+        foreach (var touchDrag in ts.Drags.Where(x => x.DragIdentifier is TouchDragIdentifier))
         {
             var body = Bodies[touchDrag.BodyIndex];
 
@@ -123,8 +120,8 @@ public class GameState
                 await batch.StrokeStyleAsync(body.Shape.Color);
                 await batch.BeginPathAsync();
 
-                await batch.MoveToAsync(body.Body.Position.X,0);
-                await batch.LineToAsync(body.Body.Position.X, GameHeight );
+                await batch.MoveToAsync(body.Body.Position.X, 0);
+                await batch.LineToAsync(body.Body.Position.X, GameHeight);
 
                 await batch.MoveToAsync(0, body.Body.Position.Y);
                 await batch.LineToAsync(GameWidth, body.Body.Position.Y);
@@ -149,8 +146,8 @@ public class GameState
                 0,
                 0,
                 ScaleConstants.YScale * projectionSize,
-                ScaleConstants.XOffset - (projectionPosition.Value.X * ScaleConstants.XScale * (projectionSize-1 )),
-                ScaleConstants.YOffset  - (projectionPosition.Value.Y * ScaleConstants.YScale* (projectionSize-1 ))
+                ScaleConstants.XOffset - (projectionPosition.Value.X * ScaleConstants.XScale * (projectionSize - 1)),
+                ts.YOffset - (projectionPosition.Value.Y * ScaleConstants.YScale * (projectionSize - 1))
             );
 
 
@@ -161,11 +158,11 @@ public class GameState
                     await batch.StrokeStyleAsync(shapeBody.Shape.Color + "40");
                     await batch.DrawBodyAsync(shapeBody, "40");
                 }
-                
+
             }
         }
 
-        
+
 #pragma warning disable CS0618
         await batch.ResetTransformAsync();
 #pragma warning restore CS0618
@@ -206,10 +203,10 @@ public class GameState
                 var x = random.NextSingle() * GameWidth / 2;
                 var y = random.NextSingle() * GameHeight / 2;
                 var newBody = shape.Create(World,
-                    ScaleConstants.ScaleVector(x + GameWidth / 4 , y + GameHeight / 4),
+                    ScaleConstants.ScaleVector(x + GameWidth / 4, y + GameHeight / 4),
                     0, Scale, BodyType.Dynamic);
 
-                newBody.LinearVelocity = ScaleConstants.ScaleVector(new Vector2(0, -10 *random.NextSingle() * ShapeScale));
+                newBody.LinearVelocity = ScaleConstants.ScaleVector(new Vector2(0, -10 * random.NextSingle() * ShapeScale));
 
                 newBody.Tag = "Dynamic " + shape.Name;
                 newBody.IsBullet = true;
@@ -244,15 +241,17 @@ public class GameState
 
     public void MaybeStartDrag(DragIdentifier identifier, float x, float y, TransientState transientState)
     {
-        var worldVector = ScaleConstants.ScaleVector(x, y);
+        var worldVector = ScaleConstants.ScaleVector(x, y - transientState.YOffset);
         var fixture = World.TestPoint(worldVector);
+
+        //Console.WriteLine($"Maybe Start Drag {y} - {transientState.YOffset}");
 
         if (fixture is not null)
         {
             var bodyIndex = Bodies.FindIndex(shapeBody => shapeBody.Body.FixtureList.Contains(fixture));
 
-            if(bodyIndex < 0)return;
-        
+            if (bodyIndex < 0) return;
+
             var body = Bodies[bodyIndex];
 
             if (body.Type == ShapeBodyType.Dynamic)
@@ -265,20 +264,20 @@ public class GameState
             }
 
         }
-        else if(identifier is TouchDragIdentifier dfi)
+        else if (identifier is TouchDragIdentifier dfi)
         {
             var dragToRotate = transientState.Drags
                 .FirstOrDefault(d => d.DragIdentifier is TouchDragIdentifier && d.Rotation is null);
 
-            if(dragToRotate != null)
+            if (dragToRotate != null)
                 dragToRotate.Rotation =
                 new DragRotation(dfi, dragToRotate.Desired.Position, worldVector, dragToRotate.Desired.Rotation);
         }
 
-        
+
     }
 
-    
+
     public void EndDrag(DragIdentifier identifier, TransientState transientState)
     {
         var drag = transientState.Drags.FirstOrDefault(d => d.DragIdentifier == identifier);
@@ -319,7 +318,7 @@ public class GameState
     public void OnDragMove(DragIdentifier identifier, float x, float y, TransientState transientState)
     {
         var drag = transientState.Drags.FirstOrDefault(d => d.DragIdentifier == identifier);
-        var v = ScaleConstants.ScaleVector(x, y);
+        var v = ScaleConstants.ScaleVector(x, y - transientState.YOffset);
 
         if (drag is null)
         {
@@ -329,8 +328,8 @@ public class GameState
                 if (rotDrag != null)
                 {
                     var rotation = rotDrag.Rotation!;
-                    
-                    var angle  = Math.Atan2(v.Y - rotation.CentrePosition.Y, v.X - rotation.CentrePosition.X) -
+
+                    var angle = Math.Atan2(v.Y - rotation.CentrePosition.Y, v.X - rotation.CentrePosition.X) -
                                  Math.Atan2(rotation.StartPosition.Y - rotation.CentrePosition.Y, rotation.StartPosition.X - rotation.CentrePosition.X);
 
                     var fullAngle = rotation.StartRotation + angle;
@@ -341,14 +340,14 @@ public class GameState
 
                 }
             }
-            
+
             return;
         }
 
         drag.SetNext(v + drag.WorldCanvasOffset, drag.Desired.Rotation);
     }
 
-    
+
 
     public void RotateDragged(int rotations, TransientState transientState)
     {
@@ -359,7 +358,7 @@ public class GameState
 
             drag.SetNext(drag.Desired.Position, (float)newAngle);
         }
-        
+
     }
 
     public string? Message

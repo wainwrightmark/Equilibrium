@@ -21,7 +21,7 @@ public static class GameShapeHelper
         = new List<GameShape>()
         {
             TriangleGameShape.Instance,
-            //HemisphereGameShape.Instance,
+            HemisphereGameShape.Instance,
             BoxGameShape.Instance,
             CircleGameShape.Instance,
             EllGameShape.Instance,
@@ -41,14 +41,14 @@ public abstract record DrawableGameShape
     public abstract Task DrawAsync(Batch2D context, Transform transform);
 }
 
-public sealed record DrawableCircle(Vector2 Position, float Radius) : DrawableGameShape
+public sealed record DrawableArc(Vector2 Position, float Radius, double StartAngle, double EndAngle) : DrawableGameShape
 {
     /// <inheritdoc />
     public override async Task DrawAsync(Batch2D context, Transform transform)
     {
         await context.BeginPathAsync();
         var translated = transform.Transform(Position);
-        await context.ArcAsync(translated.X, translated.Y, Radius, 0, Math.Tau);
+        await context.ArcAsync(translated.X, translated.Y, Radius, StartAngle + transform.q.Real, EndAngle + transform.q.Real);
 
 
         await context.FillAsync(FillRule.EvenOdd);
@@ -156,7 +156,7 @@ public class CircleGameShape : GameShape
     /// <inheritdoc />
     public override DrawableGameShape GetDrawable(float scale)
     {
-        return new DrawableCircle(Vector2.Zero, scale / 2);
+        return new DrawableArc(Vector2.Zero, scale / 2, 0 , Math.Tau);
     }
     
 
@@ -170,34 +170,44 @@ public class CircleGameShape : GameShape
     }
 }
 
-//public class HemisphereGameShape : ComplexPolygonGameShape
-//{
-//    private HemisphereGameShape()
-//    {
-//    }
+public class HemisphereGameShape : ComplexPolygonGameShape
+{
+    private HemisphereGameShape()
+    {
+    }
 
-//    public static HemisphereGameShape Instance { get; } = new();
+    public static HemisphereGameShape Instance { get; } = new();
 
+    /// <inheritdoc />
+    protected override IEnumerable<Vertices> GetVertices(float scale)
+    {
+        yield return PolygonTools.CreateArc((float)Math.PI, 8, scale / 2);
+    }
 
-//    /// <inheritdoc />
-//    public override string Name => "Hemisphere";
+    /// <inheritdoc />
+    public override DrawableGameShape GetDrawable(float scale)
+    {
+        return new DrawablePolygon(
+            GetVertices(scale).Single());
 
-//    /// <inheritdoc />
-//    public override int? RotationFraction => 4;
+        //return new DrawableArc(Vector2.Zero, scale / 2, Math.PI, Math.Tau);
+    }
 
-//    /// <inheritdoc />
-//    public override int MaxRotations => 4;
+    /// <inheritdoc />
+    public override string Name => "Hemisphere";
 
-//    /// <inheritdoc />
-//    protected override IEnumerable<Vertices> GetVertices(float scale)
-//    {
-//        yield return PolygonTools.CreateArc((float)Math.PI, 16, scale / 2);
-//    }
+    /// <inheritdoc />
+    public override int? RotationFraction => 4;
 
-//    /// <inheritdoc />
-//    public override string Color => Colors.ShapeColors[1];
+    /// <inheritdoc />
+    public override int MaxRotations => 4;
 
-//}
+   
+
+    /// <inheritdoc />
+    public override string Color => Colors.ShapeColors[1];
+
+}
 
 public class BoxGameShape : ComplexPolygonGameShape
 {

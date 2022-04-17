@@ -1,4 +1,5 @@
 ﻿using Excubo.Generators.Blazor.ExperimentalDoNotUseYet;
+using Majorsoft.Blazor.Components.Common.JsInterop.GlobalMouseEvents;
 using Majorsoft.Blazor.Components.Common.JsInterop.Resize;
 using Majorsoft.Blazor.Extensions.BrowserStorage;
 using Microsoft.AspNetCore.Components;
@@ -38,9 +39,9 @@ public partial class EquilibriumComponent
 
 
             _canvasContext = await _canvas.GetContext2DAsync();
-
-            await OnResize();
-            await ResizeHandler.RegisterPageResizeAsync(_ => OnResize()); //TODO use this to track height
+            
+            await OnResize(new ResizeEventArgs(){EventId = "Init", Height = Constants.GameHeight, Width = Constants.GameWidth});
+            await ResizeHandler.RegisterPageResizeAsync(OnResize); //TODO use this to track height
             GameState.Restart(TransientState, new Random());
             GameState.StateChanged += delegate { StateHasChanged(); };
 
@@ -56,8 +57,18 @@ public partial class EquilibriumComponent
 
     private CanvasPosition _canvasPosition;
 
-    protected async Task OnResize()
+    private double _windowWidth = Constants.GameWidth;
+    private double _windowHeight = Constants.GameHeight;
+
+    public double _canvasWidth => Constants.GameWidth;
+    public double _canvasHeight => Math.Min(Constants.GameHeight, _windowHeight - 40);
+
+
+    protected async Task OnResize(ResizeEventArgs rea)
     {
+        _windowWidth = rea.Width;
+        _windowHeight = rea.Height;
+
         _canvasPosition = await JsRuntime.InvokeAsync<CanvasPosition>(
             "eval",
             $"let e = document.querySelector('[_bl_{_container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e");
@@ -168,11 +179,11 @@ public partial class EquilibriumComponent
 
     private void OnKeyPress(KeyboardEventArgs obj)
     {
-        if (obj.Key == "q")
+        if (obj.Key is "q" or "Q" )
         {
             GameState.RotateDragged(-1 , TransientState);
         }
-        else if (obj.Key == "e")
+        else if (obj.Key is "e" or "E" )
         {
             GameState.RotateDragged(1 , TransientState);
         }
