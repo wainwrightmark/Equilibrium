@@ -47,23 +47,25 @@ public class Drag
 
         body.AngularVelocity += adjustedRotation;
 
-        //TODO make it slow down as it approaches the target
+        //How far awy the body is
         var currentDistance = Desired.Position - (body.Position) ; //m
+        //How far the body will travel
         var projectedDistance = currentDistance - (body.LinearVelocity * dt); //m
 
-
+        //This is the acceleration required to get to the target position
         var accVector = (projectedDistance / (dt * dt)); //m/s squared
             
         const float maxAcc = 10f;//m/s squared
 
         if (accVector.LengthSquared() > maxAcc)
         {
-
-            if (currentDistance.LengthSquared() > projectedDistance.LengthSquared())//Do not limit breaking acceleration
+            //The required acceleration is bigger than the max. So we reduce it
+            if (currentDistance.LengthSquared() > projectedDistance.LengthSquared())
             {
                 accVector.Normalize(); //unit
                 accVector  *= maxAcc; //m / s2
             }
+            //Do not limit acceleration as we are breaking
         }
             
         body.LinearVelocity += (accVector * dt); //m/s

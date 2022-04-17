@@ -6,6 +6,9 @@
     <div id="canvasContainer"
          @ref="_container"
          style="margin-left: auto; margin-right: auto; 
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                user-select: none;
             width: @(_canvasWidth + "px");
                 position: relative;"
          >
@@ -23,7 +26,9 @@
             @ontouchcancel="OnTouchCancel"
             @onkeypress="OnKeyPress"
 
-                @ref="_canvas"
+            @ref="_canvas"
+            style=" -webkit-touch-callout: none;
+                   -webkit-user-select: none; user-select: none;"
                 Width="@_canvasWidth"
                 Height="@_canvasHeight">
         </Canvas>
