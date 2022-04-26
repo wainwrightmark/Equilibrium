@@ -63,7 +63,7 @@ public partial class EquilibriumComponent
     private double _windowHeight = Constants.GameHeight;
 
     public double _canvasWidth => Constants.GameWidth;
-    public double _canvasHeight => Math.Min(Constants.GameHeight, _windowHeight - 10);
+    public double _canvasHeight => Math.Min(Constants.GameHeight, _windowHeight - 5);
 
 
     protected  Task OnResize(ResizeEventArgs rea)
@@ -79,6 +79,8 @@ public partial class EquilibriumComponent
         _canvasPosition = await JsRuntime.InvokeAsync<CanvasPosition>(
             "eval",
             $"let e = document.querySelector('[_bl_{_container.Id}=\"\"]'); e = e.getBoundingClientRect(); e = {{ 'Left': e.x, 'Top': e.y }}; e");
+
+        StateHasChanged();
     }
 
     private readonly object _drawing = new();

@@ -48,7 +48,7 @@ public class GameState
 #pragma warning restore CS0618
 
         await batch.ClearRectAsync(0, 0, width, height);
-        await batch.FillStyleAsync("CornSilk");
+        await batch.FillStyleAsync("White");
         await batch.FillRectAsync(0, 0, width, height);
 
         await batch.StrokeStyleAsync(Colors.Black);
