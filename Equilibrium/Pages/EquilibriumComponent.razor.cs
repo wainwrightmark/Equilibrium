@@ -39,16 +39,18 @@ public partial class EquilibriumComponent
 
 
             _canvasContext = await _canvas.GetContext2DAsync();
+
+            var pageSize = await ResizeHandler.GetPageSizeAsync();
             
-            await OnResize(new ResizeEventArgs(){EventId = "Init", Height = Constants.GameHeight, Width = Constants.GameWidth});
-            await ResizeHandler.RegisterPageResizeAsync(OnResize); //TODO use this to track height
+            await OnResize(new ResizeEventArgs(){EventId = "Init", Height = pageSize.Height, Width = pageSize.Width});
+            await ResizeHandler.RegisterPageResizeAsync(OnResize);
             GameState.Restart(TransientState, new Random());
             GameState.StateChanged += delegate { StateHasChanged(); };
 
             await JsRuntime.InvokeAsync<object>("initGame",
                 new[] { DotNetObjectReference.Create(this) as object });
 
-
+            StateHasChanged();
             //GameState.DragFirstBody(TransientState);
         }
     }
@@ -64,10 +66,15 @@ public partial class EquilibriumComponent
     public double _canvasHeight => Math.Min(Constants.GameHeight, _windowHeight - 10);
 
 
-    protected async Task OnResize(ResizeEventArgs rea)
+    protected  Task OnResize(ResizeEventArgs rea)
     {
-        _windowWidth = rea.Width;
-        _windowHeight = rea.Height;
+        return OnResize(rea.Width, rea.Height);
+    }
+
+    private async Task OnResize(double width, double height)
+    {
+        _windowWidth = width;
+        _windowHeight = height;
 
         _canvasPosition = await JsRuntime.InvokeAsync<CanvasPosition>(
             "eval",
