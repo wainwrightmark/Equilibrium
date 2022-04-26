@@ -4,22 +4,20 @@ namespace Equilibrium.Pages;
 
 public sealed record ShapeMetadata(string Shape, int Number);
 
-public sealed record Level(string InitialShape,
-    int InitialShapeRotations,
+public sealed record Level(
+    //string InitialShape,
+    //int InitialShapeRotations,
     IReadOnlyList<ShapeMetadata> Shapes)
 {
     public static readonly Level Basic =
 
-        new (BoxGameShape.Instance.Name, 0,
+        new (//BoxGameShape.Instance.Name, 0,
             GameShapeHelper.AllGameShapes.Select(x => new ShapeMetadata(Shape: x.Name,Number: 1))
                 .ToList()
         );
 
     public static Level MakeRandomLevel(Random random)
     {
-        var initialShape = RandomShape(random);
-        var initialRotation =
-            initialShape.RotationFraction is null ? 0 : random.Next(initialShape.MaxRotations);
         var totalShapes = random.Next(4, 9);
 
         var shapes = Enumerable.Range(0, totalShapes)
@@ -28,7 +26,7 @@ public sealed record Level(string InitialShape,
             .Select(x => new ShapeMetadata(x.Key, x.Count()))
             .ToList();
 
-        return new Level(initialShape.Name, initialRotation, shapes);
+        return new Level(shapes);
 
     }
 
@@ -61,17 +59,17 @@ public sealed record Level(string InitialShape,
         yield return new (null, topWall, null,ShapeBodyType.Wall) ;
         yield return new (null, leftWall,null, ShapeBodyType.Wall) ;
 
-        var initialShape = GameShapeHelper.GetShapeByName(InitialShape);
+        //var initialShape = GameShapeHelper.GetShapeByName(InitialShape);
 
-        var lowestPosition = initialShape.GetLowestPosition(shapeScale, InitialShapeRotations);
+        //var lowestPosition = initialShape.GetLowestPosition(shapeScale, InitialShapeRotations);
 
-        var initialShapePosition = new Vector2(width / 2, height + lowestPosition.Y - shapeScale);
-        var initialRotation = initialShape.GetRotation(InitialShapeRotations);
+        //var initialShapePosition = new Vector2(width / 2, height + lowestPosition.Y - shapeScale);
+        //var initialRotation = initialShape.GetRotation(InitialShapeRotations);
 
 
-        var body = initialShape.Create(world, initialShapePosition, initialRotation, shapeScale, BodyType.Static);
-        body.Tag = "Static " + initialShape.Name;
-        yield return new ShapeBody(initialShape, body, initialShape.GetDrawable(shapeScale), ShapeBodyType.Static);
+        //var body = initialShape.Create(world, initialShapePosition, initialRotation, shapeScale, BodyType.Static);
+        //body.Tag = "Static " + initialShape.Name;
+        //yield return new ShapeBody(initialShape, body, initialShape.GetDrawable(shapeScale), ShapeBodyType.Static);
     }
     
 
