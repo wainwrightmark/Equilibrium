@@ -61,7 +61,7 @@ public partial class EquilibriumComponent
     private double _windowHeight = Constants.GameHeight;
 
     public double _canvasWidth => Constants.GameWidth;
-    public double _canvasHeight => Math.Min(Constants.GameHeight, _windowHeight - 40);
+    public double _canvasHeight => Math.Min(Constants.GameHeight, _windowHeight - 10);
 
 
     protected async Task OnResize(ResizeEventArgs rea)
@@ -102,6 +102,8 @@ public partial class EquilibriumComponent
 
     private void OnMouseDown(MouseEventArgs e)
     {
+        if(e.Button != 0) return;
+        
         var x = e.ClientX - _canvasPosition.Left;
         var y = e.ClientY - _canvasPosition.Top;
 
@@ -167,6 +169,7 @@ public partial class EquilibriumComponent
     
     private void OnMouseUp(MouseEventArgs e)
     {
+        if(e.Button != 0) return;
         GameState.EndDrag(MouseDragIdentifier.Instance,TransientState);
     }
 

@@ -6,14 +6,11 @@
     <div id="canvasContainer"
          @ref="_container"
          style="margin-left: auto; margin-right: auto; 
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                user-select: none;
-            width: @(_canvasWidth + "px");
+                width: @(_canvasWidth + "px");
                 position: relative;"
          >
         <Canvas 
-            
+            @oncontextmenu:stopPropagation="true"
             @onmousedown="OnMouseDown"
             @onmousemove="OnMouseMove"
             @onmouseout="OnMouseOut"
@@ -27,8 +24,7 @@
             @onkeypress="OnKeyPress"
 
             @ref="_canvas"
-            style=" -webkit-touch-callout: none;
-                   -webkit-user-select: none; user-select: none;"
+            style="user-select: none;"
                 Width="@_canvasWidth"
                 Height="@_canvasHeight">
         </Canvas>
