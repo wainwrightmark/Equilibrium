@@ -7,7 +7,8 @@
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Equilibrium</title>
-    <base href="/Equilibrium/" />
+    <base href="/" />
+    <link href="css/paper.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
 
     <style>
@@ -34,7 +35,9 @@
 <body overscroll-behavior: contain;>
 <div id="app">
 
-    <div class="spinner"></div>
+    <div class="progress margin-bottom">
+        <div class="bar striped success" style="animation: spin 10000ms linear infinite;"></div>
+    </div>
 </div>
 
     <div id="blazor-error-ui">
@@ -49,26 +52,30 @@
 </html>
 
 <style>
-    .spinner {
-        border: 16px solid silver;
-        border-top: 16px solid #337AB7;
-        border-radius: 50%;
-        width: 80px;
-        height: 80px;
-        animation: spin 700ms linear infinite;
-        /*top: 50%;
-        left: 50%;*/
-        /*//position: absolute;*/
-        position: center;
-    }
 
     @keyframes spin {
         0% {
-            transform: rotate(0deg)
+            width: 20%
+        }
+
+        20% {
+            width: 60%
+        }
+
+        40% {
+            width: 40%
+        }
+
+        60% {
+            width: 80%
+        }
+
+        80% {
+            width: 40%
         }
 
         100% {
-            transform: rotate(360deg)
+            width: 20%
         }
     }
 </style>
