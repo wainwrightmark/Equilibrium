@@ -9,7 +9,7 @@
     "assembly": {
       "Aether.Physics2D.dll": "sha256-A2FxhkXV82SIBsj7BN9vxmnlbxWVJEvCosgNOsfUbV8=",
       "Blazor.Canvas.dll": "sha256-TEcd5F1AP\/WrNd\/gPQ0lpg6\/+0QB7NbLVZ8mTiA\/MS4=",
-      "Equilibrium.dll": "sha256-T2C+LoTi5rU3BEajJWXIfQZGdMLCf9JTvUswyX1sVf0=",
+      "Equilibrium.dll": "sha256-dJvNXou7AnMgmg3CqO+yk9pbpiv\/7BFwZ3y\/hmKWP9U=",
       "Excubo.Generators.Blazor.Attributes.dll": "sha256-FS0UASOlI6EEkuqXobbjVvLY4P\/Z0QCumkHvP8wnCjs=",
       "Majorsoft.Blazor.Components.Common.JsInterop.dll": "sha256-98iiXDeawIkOj8IhkHsxBAaPBW0M7sEneVWPXnUd0QM=",
       "Majorsoft.Blazor.Extensions.BrowserStorage.dll": "sha256-CzSPfGpINxopBMIcknFAfkTmJTHWzMsUyJiq9fo538Q=",
@@ -60,8 +60,8 @@
     "libraryInitializers": null,
     "pdb": null,
     "runtime": {
-      "dotnet.6.0.4.fwzvfw49ed.js": "sha256-L06IzCUOltX9Cpn2U+yLHdMtIw8xX\/nHZE3gmdm4+e4=",
-      "dotnet.wasm": "sha256-W23NZ2EMm3DnOTyznIty9479BCzRM6AR+bLfvbmSRbk="
+      "dotnet.6.0.4.fwzvfw49ed.js": "sha256-7eAKdIQDn4bhJQR0srJoMx9HkK44fg+mzf234+bTkZk=",
+      "dotnet.wasm": "sha256-NqqPzlp52ElO8BJKCxkJ4BAlogbXRYFU8x1zPYXI0xs="
     },
     "satelliteResources": null
   }
