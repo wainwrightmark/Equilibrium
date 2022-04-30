@@ -2,12 +2,12 @@
 
 public static class DrawHelpers
 {
-    public static async Task DrawBodyAsync(this Batch2D context, ShapeBody shapeBody, string opacityString)
+    public static async Task DrawBodyAsync(this Batch2D context, ShapeBody shapeBody, string opacityString, bool isFixed)
     {
         if(shapeBody.Shape is null || shapeBody.DrawableGameShape is null)return;
         
         string color;
-        if (shapeBody.Type == ShapeBodyType.Static)
+        if (isFixed)
             color = Colors.Grey;
         else color = shapeBody.Shape.Color;
 

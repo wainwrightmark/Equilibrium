@@ -13,9 +13,12 @@ public class GameState
     public Level Level { get; private set; }
     public List<ShapeBody> Bodies { get; } = new();
 
+    public ShapeBody? FixedBody { get; set; }
+    public ShapeBody? PreviousFixedBody { get; set; }
+
     public ScaleConstants ScaleConstants { get; } = new(GameScale, GameScale, 0, 0);
 
-    public bool IsWin { get; private set; } = false;
+    public bool IsWin { get; private set; }
 
     public float? WinTime { get; private set; }
 
@@ -39,7 +42,7 @@ public class GameState
         }
 
         ts.YOffset = ScaleConstants.YOffset -
-            (height < Constants.GameHeight ? Constants.GameHeight - height : 0);
+            (height < GameHeight ? GameHeight - height : 0);
 
         await batch.LineWidthAsync(1 / GameScale);
 
@@ -105,7 +108,7 @@ public class GameState
             }
 
             //This will not draw walls
-            await batch.DrawBodyAsync(body, "90");
+            await batch.DrawBodyAsync(body, "90", body == FixedBody);
         }
 
         Vector2? projectionPosition = null;
@@ -156,7 +159,7 @@ public class GameState
                 if (shapeBody.Shape is not null)
                 {
                     await batch.StrokeStyleAsync(shapeBody.Shape.Color + "40");
-                    await batch.DrawBodyAsync(shapeBody, "40");
+                    await batch.DrawBodyAsync(shapeBody, "40", shapeBody == FixedBody);
                 }
 
             }
@@ -242,17 +245,23 @@ public class GameState
     public void MaybeStartDrag(DragIdentifier identifier, float x, float y, TransientState transientState)
     {
         var worldVector = ScaleConstants.ScaleVector(x, y - transientState.YOffset);
-        var fixture = World.TestPoint(worldVector);
+        var selectedFixture = World.TestPoint(worldVector);
 
-        //Console.WriteLine($"Maybe Start Drag {y} - {transientState.YOffset}");
-
-        if (fixture is not null)
+        
+        if (selectedFixture is not null)
         {
-            var bodyIndex = Bodies.FindIndex(shapeBody => shapeBody.Body.FixtureList.Contains(fixture));
+            var bodyIndex = Bodies.FindIndex(shapeBody => shapeBody.Body.FixtureList.Contains(selectedFixture));
 
             if (bodyIndex < 0) return;
 
             var body = Bodies[bodyIndex];
+
+            if(body == FixedBody) //If this is the fixed body, make it dynamic again
+            {
+                body.Body.BodyType = BodyType.Dynamic;
+                FixedBody = null;
+                PreviousFixedBody = body;
+            }
 
             if (body.Type == ShapeBodyType.Dynamic)
             {
@@ -295,6 +304,19 @@ public class GameState
         }
 
         var body = Bodies[drag.BodyIndex];
+
+        if (body == PreviousFixedBody)
+        {
+            //The user changed their mind about the fixed body - unfix it
+            PreviousFixedBody = null;
+        }
+        else if (FixedBody is null)
+        {
+            //This was the first body to be moved - make it the fixed body
+            FixedBody = body;
+            body.Body.BodyType = BodyType.Static;
+        }
+
         body.Body.IgnoreGravity = false;
 
         //Do this to reset contacts
@@ -353,8 +375,8 @@ public class GameState
     {
         foreach (var drag in transientState.Drags)
         {
-            var currentRotations = Math.Round(drag.Desired.Rotation / Constants.OneRotation);
-            var newAngle = (currentRotations + rotations) * Constants.OneRotation;
+            var currentRotations = Math.Round(drag.Desired.Rotation / OneRotation);
+            var newAngle = (currentRotations + rotations) * OneRotation;
 
             drag.SetNext(drag.Desired.Position, (float)newAngle);
         }
