@@ -22,6 +22,8 @@ public class GameState
 
     public float? WinTime { get; private set; }
 
+    public int? WinProgressPercent { get; private set; }
+
     public event Action<GameState>? StateChanged;
 
     public async Task StepAndDraw(float timeStamp,
@@ -173,11 +175,17 @@ public class GameState
         //Draw Win Progress Bar
         if (WinTime is not null)
         {
-            await batch.FillStyleAsync("grey");
-            await batch.FillRectAsync(50, 50, 110, 50);
+            WinProgressPercent = Convert.ToInt32(100 * ((WinTime.Value - timeStamp) / TimerMs));
 
-            await batch.FillStyleAsync("green");
-            await batch.FillRectAsync(55, 55, 100 * ((WinTime.Value - timeStamp) / TimerMs), 40);
+            //await batch.FillStyleAsync("grey");
+            //await batch.FillRectAsync(50, 50, 110, 50);
+
+            //await batch.FillStyleAsync("green");
+            //await batch.FillRectAsync(55, 55, 100 * ((WinTime.Value - timeStamp) / TimerMs), 40);
+        }
+        else
+        {
+            WinProgressPercent = null;
         }
     }
 
@@ -191,6 +199,8 @@ public class GameState
     {
         IsWin = false;
         WinTime = null;
+        FixedBody = null;
+        PreviousFixedBody=null;
         World.Clear();
         Bodies.Clear();
         Bodies.AddRange(Level.SetupWorld(World,
@@ -383,15 +393,5 @@ public class GameState
 
     }
 
-    public string? Message
-    {
-        get
-        {
-            return IsWin switch
-            {
-                true => "You are Victorious!",
-                false => null
-            };
-        }
-    }
+
 }

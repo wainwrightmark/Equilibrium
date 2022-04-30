@@ -9,7 +9,8 @@ public sealed record UserLevel(string Name, Level Level, bool IsBeaten, int? Fun
         var sb = new StringBuilder();
 
         sb.Append(Name);
-        sb.Append(' ');
+        sb.AppendLine();
+        //sb.Append(' ');
         sb.Append(IsBeaten ? '✅' : '❎');
         sb.Append(' ');
         AppendStars(FunStars, 5, sb);

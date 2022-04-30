@@ -1,14 +1,13 @@
 ﻿
-<div>
+<div style="display: flex;">
     @for (var i = 1; i <= MaxRating; i++)
     {
         var i1 = i;
         var c = i <= Rating ? '★' : '☆';
     
-        <button class="rating-button" @onclick="()=> Rating = i1">@c</button>
+        <button  style="margin-left: 0; border: none; background: transparent;" @onclick="()=> Rating = i1">@c</button>
     }
 </div>
-
 
 
 @code {
@@ -38,3 +37,4 @@
     public int MaxRating { get; set; } = 5;
 
 }
+
