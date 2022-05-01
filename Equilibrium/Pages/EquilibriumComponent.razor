@@ -42,10 +42,7 @@
             
             <br/>
 
-            
-            <div class="progress margin-bottom" hidden="@(!GameState.WinProgressPercent.HasValue)" style="width: @(_canvasWidth - 50 + "px;")">
-                <div class="bar striped success" style="width: @((GameState.WinProgressPercent??0) + "%;")"></div>
-            </div>
+            <ProgressComponent @ref="_progressComponent" GameState="GameState" CanvasWidth="_canvasWidth"/>
             <br/>
 
             @if (GameState.IsWin)

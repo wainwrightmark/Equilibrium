@@ -1,0 +1,20 @@
+﻿<div class="progress margin-bottom" 
+     hidden="@(!GameState.WinProgressPercent.HasValue)" 
+     style="width: @(CanvasWidth - 50 + "px;")">
+    <div class="bar striped success" style="width: @((GameState.WinProgressPercent??0) + "%;")"></div>
+</div>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public GameState GameState { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public double CanvasWidth { get; set; }
+
+    public void StateChanged()
+    {
+        StateHasChanged();
+    }
+}

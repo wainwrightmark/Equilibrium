@@ -59,6 +59,8 @@ public partial class EquilibriumComponent
 
     private CanvasPosition _canvasPosition;
 
+    private ProgressComponent _progressComponent;
+
     private double _windowWidth = Constants.GameWidth;
     private double _windowHeight = Constants.GameHeight;
 
@@ -99,6 +101,7 @@ public partial class EquilibriumComponent
         {
             await using var batch = _canvasContext.CreateBatch();
             await GameState.StepAndDraw(timeStamp, batch, width, height, TransientState);
+            _progressComponent.StateChanged();
             Monitor.Exit(_drawing);
 
             if (GameState.IsWin && !UserLevel.IsBeaten)
