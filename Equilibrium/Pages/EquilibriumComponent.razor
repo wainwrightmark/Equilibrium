@@ -29,7 +29,7 @@
                 Height="@_canvasHeight">
         </Canvas>
 
-        <div style="position: absolute; top: 25px; margin: 25px;">
+        <div style="position: absolute; top: 25px; margin: 25px; ">
             
             <select @bind="LevelName" style="width: @(_canvasWidth - 50 + "px;")">
                 @foreach (var level in SavedLevels)
@@ -45,29 +45,32 @@
             <ProgressComponent @ref="_progressComponent" GameState="GameState" CanvasWidth="_canvasWidth"/>
             <br/>
 
-            @if (GameState.IsWin)
-            {
-                <input class="alert-state" id="win-alert" type="checkbox">
-                <div class="alert alert-success dismissible" style="display: block; width: @(_canvasWidth - 50 + "px;")">
-                    <h3>Congratulations</h3>
-                    <br/>
-                    <label for="levelDifficultyRating">Difficulty</label>
-                    <RatingComponent @bind-Rating="LevelDifficulty"/>
-                    <br/>
-                    <label for="levelFunRating">Fun</label>
-                    <RatingComponent @bind-Rating="LevelFun"/>
-                    <br/>
-                    <div style="display: flex; justify-content: space-evenly;">
-                        <button @onclick="() => GameState.Restart(TransientState, new Random())">Restart</button>
+            
+        </div>
+        
+        @if (GameState.IsWin)
+        {
+            <input class="alert-state" id="win-alert" type="checkbox">
+            <div class="alert alert-success dismissible" style="position: absolute; top: 0px; margin: 25px; display: block; width: @(_canvasWidth - 50 + "px;")">
+                <h3>Congratulations</h3>
+                <br/>
+                <label for="levelDifficultyRating">Difficulty</label>
+                <RatingComponent @bind-Rating="LevelDifficulty"/>
+                <br/>
+                <label for="levelFunRating">Fun</label>
+                <RatingComponent @bind-Rating="LevelFun"/>
+                <br/>
+                <div style="display: flex; justify-content: space-evenly;">
+                    <button @onclick="() => GameState.Restart(TransientState, new Random())">Restart</button>
 
-                        <label class="btn-close paper-btn" for="win-alert">X</label>
-                    </div>
-
-                    
+                    <label class="btn-close paper-btn" for="win-alert">X</label>
                 </div>
 
-            }
-        </div>
+                    
+            </div>
+
+        }
+
     </div>
 </div>
 
